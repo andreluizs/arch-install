@@ -57,41 +57,82 @@ readonly DISPLAY_SERVER="xorg-server xorg-xinit xorg-xprop xorg-xbacklight xorg-
 readonly VGA_INTEL="mesa xf86-video-intel lib32-mesa vulkan-intel"
 readonly VGA_VBOX="virtualbox-guest-utils virtualbox-guest-modules-arch"
 
-# Pacotes
-readonly PKG_EXTRA=("bash-completion" "powerline" "powerline-fonts" "xdg-user-dirs" "vim"
-                    "google-chrome" "playerctl"  "network-manager-applet" "networkmanager-pptp"
-                    "telegram-desktop" "p7zip" "zip" "unzip" "unrar" "wget" "numlockx"
-                     "polkit"
-                    "compton" "pavucontrol" "remmina" "rdesktop" "remmina-plugin-rdesktop"
-                    "pamac-aur" "gtk-engine-murrine" "lib32-gtk-engine-murrine"   "plank"
-                     "mpv"
-                    "spotify" "hardcode-tray-git" )
+#===============================================================================
+#-----------------------------------PACOTES-------------------------------------
+#===============================================================================
+readonly PKG_EXTRA=("bash-completion" 
+                    "powerline" 
+                    "xdg-user-dirs" 
+                    "vim"
+                    "telegram-desktop" 
+                    "p7zip" 
+                    "zip" 
+                    "unzip" 
+                    "unrar" 
+                    "wget" 
+                    "numlockx"
+                    "polkit"
+                    "compton" 
+                    "pamac-aur")
 
-readonly PKG_DEV=("jdk8" "intellij-idea-ultimate-edition-jre" "intellij-idea-ultimate-edition"
-                                    "visual-studio-code-bin"
-                                    "virtualbox" "virtualbox-host-modules-arch" "linux-headers")
+readonly PKG_AUDIO=("spotify" 
+                    "playerctl" 
+                    "pavucontrol")
 
-readonly PKG_THEME=("adapta-gtk-theme" "flat-remix-git"  "pop-icon-theme-git" 
-                                          "papirus-icon-theme-git" "arc-gtk-theme-git" "bibata-cursor-theme")
+readonly PKG_VIDEO=("mpv")
 
-readonly PKG_FONT=("ttf-iosevka-term-ss09" "ttf-ubuntu-font-family" "ttf-font-awesome" 
-                                       "ttf-monoid" "ttf-fantasque-sans-mono")
+readonly PKG_REDE=("google-chrome" 
+                   "network-manager-applet" 
+                   "networkmanager-pptp" 
+                   "remmina" 
+                   "rdesktop" 
+                   "remmina-plugin-rdesktop")
+
+readonly PKG_DEV=("jdk8" 
+                  "intellij-idea-ultimate-edition-jre" 
+                  "intellij-idea-ultimate-edition"
+                  "visual-studio-code-bin"
+                  "virtualbox" 
+                  "virtualbox-host-modules-arch" 
+                  "linux-headers")
+
+readonly PKG_THEME=("adapta-gtk-theme" 
+                    "flat-remix-git"  
+                    "pop-icon-theme-git" 
+                    "papirus-icon-theme-git" 
+                    "arc-gtk-theme-git" 
+                    "bibata-cursor-theme"
+                    "hardcode-tray-git" 
+                    "gtk-engine-murrine" 
+                    "lib32-gtk-engine-murrine"
+                    "plank")
+
+readonly PKG_FONT=("ttf-iosevka-term-ss09" 
+                   "ttf-ubuntu-font-family" 
+                   "ttf-font-awesome" 
+                   "ttf-monoid" 
+                   "ttf-fantasque-sans-mono" 
+                   "powerline-fonts")
 
 readonly PKG_NOTE=( "xf86-input-libinput" )
 
-# Desktop Environment
+#===============================================================================
+#---------------------------DESKTOP ENVIRONMENT's-------------------------------
+#===============================================================================
 
 # XFCE
 readonly DE_XFCE="xfce4 xfce4-goodies"
 readonly DE_XFCE_EXTRA="file-roller xfce4-whiskermenu-plugin alacarte thunar-volman thunar-archive-plugin gvfs xfce4-dockbarx-plugin xfce-theme-greybird elementary-xfce-icons xfce-polkit-git"
 
 # Plasma
-readonly DE_KDE="plasma-meta  sddm sddm-kcm"
+readonly DE_KDE="plasma-meta sddm sddm-kcm"
 
 # Deepin
 readonly DE_DEEPIN="deepin deepin-extra"
 
-# Window Manager's
+#===============================================================================
+#---------------------------WINDOW MANAGER's------------------------------------
+#===============================================================================
 
 # I3wm
 readonly WM_I3="i3-gaps i3lock rofi mlocate dunst polybar nitrogen tty-clock lxappearance"
@@ -99,13 +140,15 @@ readonly WM_I3="i3-gaps i3lock rofi mlocate dunst polybar nitrogen tty-clock lxa
 # Openbox
 readonly WM_OPENBOX="openbox obconf openbox-themes obmenu lxappearance-obconf tint2"
 
-# Display Manager
+#===============================================================================
+#---------------------------DISPLAY MANAGER's-----------------------------------
+#===============================================================================
 readonly DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings lightdm-slick-greeter lightdm-settings light-locker"
 readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw-grid=false\\\nbackground=/usr/share/backgrounds/xfce/xfce-blue.jpg\\\nactivate-numlock=true"
 
 
 #===============================================================================
-#------------------------------------------------------------FUNÇÕES------------------------------------------------------------------
+#-----------------------------------FUNÇÕES-------------------------------------
 #===============================================================================
 
 function _msg() {
@@ -317,9 +360,9 @@ function instalar_bootloader_refind(){
 function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
     _chroot "pacman -S grub efibootmgr --needed --noconfirm" 1> /dev/null
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB"
      if [ "$(systemd-detect-virt)" != "none" ]; then
-        _chroot "mkdir /boot/EFI/BOOT"
+        _chroot "mkdir -p /boot/EFI/BOOT"
         _chroot "mv /boot/EFI/arch/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
      fi
      _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
@@ -353,9 +396,7 @@ function instalar_gerenciador_aur(){
 }
 
 function instalar_desktop_environment(){
-     (_chuser "trizen -S ${DE_KDE} --needed --noconfirm" &> /dev/null
-      _chroot "systemctl enable sddm.service" &> /dev/null
-     ) &
+     (_chuser "trizen -S ${DE_DEEPIN} --needed --noconfirm" &> /dev/null) &
     _spinner "${VERDE}>${SEMCOR} Instalando o desktop environment:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
@@ -421,20 +462,20 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_rede
-    instalar_bootloader_refind
-    #instalar_bootloader_grub
+    #instalar_bootloader_refind
+    instalar_bootloader_grub
     instalar_display_server
     instalar_video
     instalar_gerenciador_aur
     instalar_desktop_environment
     #instalar_window_manager
-    #instalar_display_manager
+    instalar_display_manager
     
-    #if [ "$(systemd-detect-virt)" = "none" ]; then
-        #instalar_pacotes_extras
-        #instalar_pacotes_desenvolvedor
-        #clonar_dotfiles
-    #fi
+    if [ "$(systemd-detect-virt)" = "none" ]; then
+        instalar_pacotes_extras
+        instalar_pacotes_desenvolvedor
+        clonar_dotfiles
+    fi
 
     _msg info 'Sistema instalado com sucesso!'
     _msg aten 'Retire a midia do computador e logo em seguida reinicie a máquina.'

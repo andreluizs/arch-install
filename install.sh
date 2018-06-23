@@ -362,8 +362,8 @@ function instalar_bootloader_grub(){
     _chroot "pacman -S grub efibootmgr --needed --noconfirm" 1> /dev/null
     _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB"
      if [ "$(systemd-detect-virt)" != "none" ]; then
-        _chroot "mkdir -p /boot/EFI/BOOT"
-        _chroot "mv /boot/EFI/arch/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
+        _chroot "mkdir -p /boot/efi/EFI/BOOT/"
+        _chroot "mv /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/BOOT/bootx64.efi"
      fi
      _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
 }

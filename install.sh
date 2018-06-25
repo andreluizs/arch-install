@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 #===============================================================================
-#
-#   FILE: install.sh
-#
-#   USAGE: ./install.sh
-#
 #   DESCRIPTION: Script para realizar a instalação do Arch Linux.
-#
 #   AUTHOR: André Luiz dos Santos (andreluizs@live.com),
 #   CREATED: 03/2018
 #   LAST UPDATE: 06/2018
@@ -14,7 +8,6 @@
 #===============================================================================
 set -o errexit
 set -o pipefail
-
 #===============================================================================
 #---------------------------------VARIAVEIS-------------------------------------
 #===============================================================================
@@ -61,7 +54,7 @@ readonly VGA_VBOX="virtualbox-guest-utils virtualbox-guest-modules-arch"
 #-----------------------------------PACOTES-------------------------------------
 #===============================================================================
 readonly PKG_EXTRA=("bash-completion" 
-                    "powerline" 
+                    "zsh" 
                     "xdg-user-dirs" 
                     "vim"
                     "telegram-desktop" 
@@ -112,9 +105,9 @@ readonly PKG_FONT=("ttf-iosevka-term-ss09"
                    "ttf-font-awesome" 
                    "ttf-monoid" 
                    "ttf-fantasque-sans-mono" 
-                   "powerline-fonts")
+                   "ttf-ms-fonts")
 
-readonly PKG_NOTE=( "xf86-input-libinput" )
+readonly PKG_NOTE=("xf86-input-libinput")
 
 #===============================================================================
 #---------------------------DESKTOP ENVIRONMENT's-------------------------------
@@ -129,6 +122,9 @@ readonly DE_KDE="plasma-meta sddm sddm-kcm"
 
 # Deepin
 readonly DE_DEEPIN="deepin deepin-extra"
+
+# Cinnamon
+readonly DE_CINNAMON="cinnamon cinnamon-translations"
 
 #===============================================================================
 #---------------------------WINDOW MANAGER's------------------------------------
@@ -153,10 +149,10 @@ readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw
 
 function _msg() {
     case $1 in
-    info)       echo -e "${VERDE}>${SEMCOR} $2" ;;
-    aten)       echo -e "${AMARELO}>${SEMCOR} $2" ;;
-    erro)       echo -e "${VERMELHO}>${SEMCOR} $2" ;;
-    quest)      echo -ne "${AZUL}>${SEMCOR} $2" ;;
+    info)       echo -e "${VERDE}->${SEMCOR} $2" ;;
+    aten)       echo -e "${AMARELO}->${SEMCOR} $2" ;;
+    erro)       echo -e "${VERMELHO}->${SEMCOR} $2" ;;
+    quest)      echo -ne "${AZUL}->${SEMCOR} $2" ;;
     esac
 }
 
@@ -194,7 +190,7 @@ function bem_vindo() {
 }
 
 function iniciar() {
-
+    
     echo -e "${NEGRITO}"
     echo -e "================================= DEFAULT ==================================${SEMCOR}"
     echo -e "Nome: ${MAGENTA}${MY_USER_NAME}${SEMCOR}            User: ${MAGENTA}${MY_USER}${SEMCOR}        Maquina: ${MAGENTA}${HOST}${SEMCOR}       "
@@ -214,69 +210,59 @@ function iniciar() {
     reflector --country Brazil --verbose --latest 10 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
 }
 
-function particionar_hd() {
-
-    # Calculo para criar as partições com o parted
+function criar_volume_fisico(){
     local boot_start=1
     local boot_end=$((BOOT_SIZE + boot_start))
-    local root_start=$boot_end
-    local root_end=$((root_start + ROOT_SIZE))
-    local home_start=$root_end
-    local home_end="100%"
 
     _msg info "Definindo o device: ${HD} para GPT."
-    parted -s "$HD" mklabel gpt &> /dev/null
+    parted -s "$HD" mklabel gpt 1> /dev/null
 
     _msg info "Criando a partição /boot com ${MAGENTA}${BOOT_SIZE}MB${SEMCOR}."
-    parted "$HD" mkpart ESP fat32 "${boot_start}MiB" "${boot_end}MiB" 2> /dev/null
-    parted "$HD" set 1 boot on 2> /dev/null
+    parted "$HD" mkpart ESP fat32 "${boot_start}MiB" "${boot_end}MiB"
+    parted "$HD" set 1 boot on &> /dev/null
 
-    _msg info "Criando a partição /root com ${MAGENTA}${ROOT_SIZE}MB${SEMCOR}."
-    parted "$HD" mkpart primary ext4 "${root_start}MiB" "${root_end}MiB" 2> /dev/null
+    _msg info "Criando a partição: "${MAGENTA}${HD}2${SEMCOR}." como ${MAGENTA}lvm.${SEMCOR}."
+    parted "$HD" mkpart primary ext4 "${boot_end}MiB" 100% 2> /dev/null
+    parted -s "$HD" set 2 lvm on 1> /dev/null
+    
+    _msg info "Criando o volume físico: "${MAGENTA}${HD}2"${SEMCOR}."
+    pvcreate "${HD}2" 1> /dev/null
 
-    _msg info "Criando a partição /home com o ${MAGENTA}restante do HD${SEMCOR}."
-    parted "$HD" mkpart primary ext4 "${home_start}MiB" "$home_end" 2> /dev/null
+    _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
+    vgcreate vg1 "${HD}2" 1> /dev/null
 
+    _msg info "Criando o volume /root com ${MAGENTA}50G${SEMCOR}."
+    lvcreate -L 50G -n root vg1 1> /dev/null
+
+    #_msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
+    #lvcreate -L 4G -n swap vg1
+
+    _msg info "Criando o volume /home com o ${MAGENTA}restante do HD${SEMCOR}."
+    lvcreate -l 100%FREE -n home vg1 &> /dev/null
 }
 
-function formatar_particao() {
-
-    _msg info 'Formatando a partição /boot.'
+function formatar_volume(){
     mkfs.vfat -F32 "${HD}1" -n BOOT 1> /dev/null
-
-    _msg info 'Formatando a partição /root.'
-    mkfs.ext4 "${HD}2" -L ROOT &> /dev/null
-
-    _msg info 'Formatando a partição /home.'
-    mkfs.ext4 "${HD}3" -L HOME &> /dev/null
-
+    mkfs.ext4 /dev/mapper/vg1-root 1> /dev/null
+    mkfs.ext4 /dev/mapper/vg1-home 1> /dev/null
 }
 
-function montar_particao() {
+function montar_volume(){
+    mount /dev/mapper/vg1-root /mnt 1> /dev/null
+    mkdir -p /mnt/boot 1> /dev/null
+    mkdir -p /mnt/home 1> /dev/null
+    mount "${HD}1" /mnt/boot 1> /dev/null
+    mount /dev/mapper/vg1-home /mnt/home 1> /dev/null
 
-    _msg info 'Montando a partição /root.'
-    mount "${HD}2" /mnt 1> /dev/null
-
-    _msg info 'Montando a partição /boot.'
-    mkdir -p /mnt/boot/efi
-    mount "${HD}1" /mnt/boot/efi 1> /dev/null
-    #mkdir -p /mnt/boot
-    #mount "${HD}1" /mnt/boot 1> /dev/null
-
-    _msg info 'Montando a partição /home.'
-    mkdir /mnt/home
-    mount "${HD}3" /mnt/home 1> /dev/null
-
-    echo -e "${AZUL}================= TABELA =================${SEMCOR}"
+    echo -e "${AZUL}====================== TABELA ===================${SEMCOR}"
     lsblk "$HD"
-    echo -e "${AZUL}==========================================${SEMCOR}"
-
+    echo -e "${AZUL}=================================================${SEMCOR}"
 }
 
 function instalar_sistema() {
 
     (pacstrap /mnt base base-devel &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o sistema base:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o sistema base:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 
     _msg info "Gerando o fstab."
@@ -344,7 +330,7 @@ function criar_usuario(){
 function instalar_rede(){
     (_chroot "pacman -S networkmanager --needed --noconfirm" 1> /dev/null
     _chroot "systemctl enable NetworkManager.service" 2> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o networkmanager:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o networkmanager:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -353,24 +339,31 @@ function instalar_bootloader_refind(){
     (_chroot "pacman -S refind-efi --needed --noconfirm" 1> /dev/null
     _chroot "refind-install --usedefault \"${HD}1\"" &> /dev/null
     _chroot "echo ${arch_entrie} > /boot/refind_linux.conf" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o rEFInd bootloader:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o rEFInd bootloader:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
 function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
-    _chroot "pacman -S grub efibootmgr --needed --noconfirm" 1> /dev/null
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB"
+    _chroot "pacman -S grub efibootmgr os-prober --needed --noconfirm" 1> /dev/null
+    #_chroot "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB"
      if [ "$(systemd-detect-virt)" != "none" ]; then
-        _chroot "mkdir -p /boot/efi/EFI/BOOT/"
-        _chroot "mv /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/BOOT/bootx64.efi"
+        _chroot "mkdir -p /boot/EFI/BOOT"
+        _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
      fi
+     # add o lvm2 ao hooks
+     #_chroot "sed '/block/a lvm2' /etc/mkinitcpio.conf"
+
+     # add o lvm no grub modules
      _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
+     _chroot "mkinitcpio -p linux"
+
 }
 
 function instalar_display_server(){
     (_chroot "pacman -S ${DISPLAY_SERVER} --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o display server:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o display server:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -382,7 +375,7 @@ function instalar_video(){
             _chroot "pacman -S ${VGA_VBOX} --needed --noconfirm" 1> /dev/null
         fi
     ) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o drive de video:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o drive de video:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -391,19 +384,19 @@ function instalar_gerenciador_aur(){
     _chuser "cd /home/${MY_USER} && git clone https://aur.archlinux.org/trizen.git && 
              cd /home/${MY_USER}/trizen && makepkg -si --noconfirm && 
              rm -rf /home/${MY_USER}/trizen" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o Trizen:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o Trizen:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
 function instalar_desktop_environment(){
-     (_chuser "trizen -S ${DE_DEEPIN} --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o desktop environment:" $! 
+     (_chuser "trizen -S ${DE_CINNAMON} --needed --noconfirm" &> /dev/null) &
+    _spinner "${VERDE}->${SEMCOR} Instalando o desktop environment:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
 function instalar_window_manager(){
    (_chuser "trizen -S ${WM_I3} --needed --noconfirm" &> /dev/null) &
-   _spinner "${VERDE}>${SEMCOR} Instalando o window manager:" $! 
+   _spinner "${VERDE}->${SEMCOR} Instalando o window manager:" $! 
    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -412,13 +405,13 @@ function instalar_display_manager(){
     _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"
     _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
     _chroot "systemctl enable lightdm.service" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o display manager:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o display manager:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
 function instalar_som(){
     (_chroot "pacman -S alsa-utils alsa-oss alsa-lib pulseaudio --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}>${SEMCOR} Instalando o pacote de audio:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o pacote de audio:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -428,7 +421,7 @@ function clonar_dotfiles(){
         _chuser "cd /home/${MY_USER} && git clone --bare https://github.com/andreluizs/dotfiles.git /home/${MY_USER}/.dotfiles" &> /dev/null
         _chuser "cd /home/${MY_USER} && /usr/bin/git --git-dir=/home/${MY_USER}/.dotfiles/ --work-tree=/home/${MY_USER} checkout" &> /dev/null
     ) &
-    _spinner "${VERDE}>${SEMCOR} Clonando os dotfiles:" $! 
+    _spinner "${VERDE}->${SEMCOR} Clonando os dotfiles:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -436,7 +429,7 @@ function instalar_pacotes_extras(){
      _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
     for i in "${PKG_EXTRA[@]}"; do
         (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
-        _spinner "${VERDE}>${SEMCOR} Instalando o pacote ${i}:" $! 
+        _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
         echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
     done 
     _chuser "xdg-user-dirs-update"
@@ -447,7 +440,7 @@ function instalar_pacotes_desenvolvedor(){
     _msg info "${NEGRITO}Instalando aplicativos para desenvolvimento:${SEMCOR}"
     for i in "${PKG_DEV[@]}"; do
          (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
-        _spinner "${VERDE}>${SEMCOR} Instalando o pacote ${i}:" $! 
+        _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
         echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
     done 
     _chroot "archlinux-java set java-8-jdk"
@@ -458,7 +451,7 @@ function configurar_sistema() {
     _msg info "${NEGRITO}Entrando no novo sistema.${SEMCOR}"
     configurar_idioma
     configurar_hora
-    criar_swapfile
+    #criar_swapfile
     configurar_pacman
     criar_usuario
     instalar_rede
@@ -478,7 +471,7 @@ function configurar_sistema() {
     fi
 
     _msg info 'Sistema instalado com sucesso!'
-    _msg aten 'Retire a midia do computador e logo em seguida reinicie a máquina.'
+    _msg erro 'Retire a midia do computador e logo em seguida reinicie a máquina.'
     umount -R /mnt &> /dev/null
 }
 
@@ -486,8 +479,8 @@ function configurar_sistema() {
 clear
 bem_vindo
 iniciar
-particionar_hd
-formatar_particao
-montar_particao
+criar_volume_fisico
+formatar_volume
+montar_volume
 instalar_sistema
 configurar_sistema

@@ -273,11 +273,11 @@ function criar_volume_fisico(){
     parted -s "$HD" mklabel gpt 1> /dev/null
 
     _msg info "Criando a partição /boot com ${MAGENTA}${BOOT_SIZE}MB${SEMCOR}."
-    parted "$HD" mkpart ESP fat32 "${boot_start}MiB" "${boot_end}MiB"
+    parted "$HD" mkpart ESP fat32 "${boot_start}MiB" "${boot_end}MiB" &> /dev/null
     parted "$HD" set 1 boot on &> /dev/null
 
     _msg info "Criando a partição: "${MAGENTA}${HD}2${SEMCOR}." como ${MAGENTA}lvm.${SEMCOR}."
-    parted "$HD" mkpart primary ext4 "${boot_end}MiB" 100% 2> /dev/null
+    parted "$HD" mkpart primary ext4 "${boot_end}MiB" 100% &> /dev/null
     parted -s "$HD" set 2 lvm on &> /dev/null
     
     _msg info "Criando o volume físico: "${MAGENTA}${HD}2"${SEMCOR}."
@@ -286,8 +286,8 @@ function criar_volume_fisico(){
     _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
     vgcreate vg1 "${HD}2" &> /dev/null
 
-    _msg info "Criando o volume /root com ${MAGENTA}50G${SEMCOR}."
-    lvcreate -L 50G -n root vg1 &> /dev/null
+    _msg info "Criando o volume /root com ${MAGENTA}${ROOT_SIZE}MB${SEMCOR}."
+    lvcreate -L "${ROOT_SIZE}MiB" -n root vg1 &> /dev/null
 
     #_msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
     #lvcreate -L 4G -n swap vg1
@@ -412,18 +412,19 @@ function instalar_bootloader_refind(){
 function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
     _chroot "pacman -S grub efibootmgr os-prober --needed --noconfirm" 1> /dev/null
-    #_chroot "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB"
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB" &> /dev/null
      if [ "$(systemd-detect-virt)" != "none" ]; then
         _chroot "mkdir -p /boot/EFI/BOOT"
         _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
      fi
      # add o lvm2 ao hooks
+     _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
      #_chroot "sed '/block/a lvm2' /etc/mkinitcpio.conf"
 
      # add o lvm no grub modules
-     _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
-     _chroot "mkinitcpio -p linux"
+     _chroot "sed -i '/GRUB_PRELOAD_MODULES=\"\>/a lvm ' /etc/default/grub"
+     _chroot "grub-mkconfig -o /boot/grub/grub.cfg" 1> /dev/null
+     _chroot "mkinitcpio -p linux" 1> /dev/null
 
 }
 
@@ -510,10 +511,10 @@ function configurar_sistema() {
     instalar_gerenciador_aur
     instalar_desktop_environment "${DE_CINNAMON[@]}" #TROCAR PARA A DE PREFERIDA
     instalar_display_manager "${WM_I3[@]}"
-    if [ "$(systemd-detect-virt)" != "none" ]; then
-        pacote_audio
-        pacote_video
-        pacote_rede
+    pacote_audio
+    pacote_video
+    pacote_rede
+    if [ "$(systemd-detect-virt)" = "none" ]; then
         pacote_fonte
         pacote_theme
         pacote_desenvolvedor
@@ -522,8 +523,8 @@ function configurar_sistema() {
     fi
     instalar_bootloader_grub
 
-    _msg info 'Sistema instalado com sucesso!'
-    _msg erro 'Retire a midia do computador e logo em seguida reinicie a máquina.'
+    _msg info "${VERDE}Sistema instalado com sucesso!${SEMCOR}"
+    _msg erro "${AMARELO}Retire a midia do computador e logo em seguida reinicie a máquina.${SEMCOR}"
     umount -R /mnt &> /dev/null
 }
 

@@ -278,22 +278,22 @@ function criar_volume_fisico(){
 
     _msg info "Criando a partição: "${MAGENTA}${HD}2${SEMCOR}." como ${MAGENTA}lvm.${SEMCOR}."
     parted "$HD" mkpart primary ext4 "${boot_end}MiB" 100% 2> /dev/null
-    parted -s "$HD" set 2 lvm on 1> /dev/null
+    parted -s "$HD" set 2 lvm on &> /dev/null
     
     _msg info "Criando o volume físico: "${MAGENTA}${HD}2"${SEMCOR}."
     pvcreate "${HD}2" &> /dev/null
 
     _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
-    vgcreate vg1 "${HD}2" 2> /dev/null
+    vgcreate vg1 "${HD}2" &> /dev/null
 
     _msg info "Criando o volume /root com ${MAGENTA}50G${SEMCOR}."
-    lvcreate -L 50G -n root vg1 2> /dev/null
+    lvcreate -L 50G -n root vg1 &> /dev/null
 
     #_msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
     #lvcreate -L 4G -n swap vg1
 
     _msg info "Criando o volume /home com o ${MAGENTA}restante do HD${SEMCOR}."
-    lvcreate -l 100%FREE -n home vg1 2> /dev/null
+    lvcreate -l 100%FREE -n home vg1 &> /dev/null
 }
 
 function formatar_volume(){
@@ -392,8 +392,8 @@ function instalar_gerenciador_aur(){
 }
 
 function instalar_pacote(){
-    local pacote=$1
-    for i in "${pacote[@]}"; do
+    local pacotes=("$@")
+    for i in "${pacotes[@]}"; do
         (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
         _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
         echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
@@ -429,12 +429,12 @@ function instalar_bootloader_grub(){
 
 function instalar_desktop_environment(){
     _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
-    instalar_pacote "${1}"
+    instalar_pacote "$@"
 }
 
 function instalar_window_manager(){
     _msg info "${NEGRITO}Instalando window manager:${SEMCOR}"
-    instalar_pacote "${1}"
+    instalar_pacote "$@"
 }
 
 function instalar_display_manager(){
@@ -458,46 +458,46 @@ function clonar_dotfiles(){
 
 function pacote_audio(){
     _msg info "${NEGRITO}Instalando pacotes de audio:${SEMCOR}"
-    instalar_pacote "${PKG_AUDIO}"
+    instalar_pacote "${PKG_AUDIO[@]}"
 }
 
 function pacote_video(){
     _msg info "${NEGRITO}Instalando pacotes de vídeo:${SEMCOR}"
     instalar_pacote "$DISPLAY_SERVER"
     if [ "$(systemd-detect-virt)" = "none" ]; then
-        instalar_pacote "${VGA_INTEL}"
+        instalar_pacote "${VGA_INTEL[@]}"
     else
-        instalar_pacote "${VGA_VBOX}"
+        instalar_pacote "${VGA_VBOX[@]}"
     fi
-    instalar_pacote "${PKG_VIDEO}"
+    instalar_pacote "${PKG_VIDEO[@]}"
 }
 
 function pacote_rede(){
     _msg info "${NEGRITO}Instalando pacotes de rede:${SEMCOR}"
-    instalar_pacote "${PKG_REDE}"
+    instalar_pacote "${PKG_REDE[@]}"
     _chroot "systemctl enable NetworkManager.service" 2> /dev/null
 }
 
 function pacote_fonte(){
     _msg info "${NEGRITO}Instalando fontes:${SEMCOR}"
-    instalar_pacote "${PKG_FONT}"
+    instalar_pacote "${PKG_FONT[@]}"
 }
 
 function pacote_theme(){
     _msg info "${NEGRITO}Instalando temas:${SEMCOR}"
-    instalar_pacote "${PKG_THEME}"
+    instalar_pacote "${PKG_THEME[@]}"
 }
 
 function pacote_desenvolvedor(){
     _chroot "mount -o remount,size=4G,noatime /tmp"
     _msg info "${NEGRITO}Instalando aplicativos para desenvolvimento:${SEMCOR}"
-    instalar_pacote "${PKG_DEV}"
+    instalar_pacote "${PKG_DEV[@]}"
     _chroot "archlinux-java set java-8-jdk"
 }
 
 function pacote_diversos(){
     _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
-    instalar_pacote "${PKG_EXTRA}"
+    instalar_pacote "${PKG_EXTRA[@]}"
     _chuser "xdg-user-dirs-update"
 }
 
@@ -508,8 +508,8 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_gerenciador_aur
-    instalar_desktop_environment "${DE_CINNAMON}" #TROCAR PARA A DE PREFERIDA
-    instalar_display_manager "${WM_I3}"
+    instalar_desktop_environment "${DE_CINNAMON[@]}" #TROCAR PARA A DE PREFERIDA
+    instalar_display_manager "${WM_I3[@]}"
     if [ "$(systemd-detect-virt)" != "none" ]; then
         pacote_audio
         pacote_video

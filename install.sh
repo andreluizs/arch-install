@@ -45,68 +45,83 @@ readonly TIMEZONE="America/Sao_Paulo"
 readonly NTP="NTP=0.arch.pool.ntp.org 1.arch.pool.ntp.org2.arch.pool.ntp.org 3.arch.pool.ntp.org
 FallbackNTP=FallbackNTP=0.pool.ntp.org 1.pool.ntp.org 0.fr.pool.ntp.org"
 
-# Video
-readonly DISPLAY_SERVER="xorg-server xorg-xinit xorg-xprop xorg-xbacklight xorg-xdpyinfo xorg-xrandr"
-readonly VGA_INTEL="mesa xf86-video-intel lib32-mesa vulkan-intel"
-readonly VGA_VBOX="virtualbox-guest-utils virtualbox-guest-modules-arch"
 
 #===============================================================================
 #-----------------------------------PACOTES-------------------------------------
 #===============================================================================
-readonly PKG_EXTRA=("bash-completion" 
-                    "zsh" 
-                    "xdg-user-dirs" 
-                    "vim"
-                    "telegram-desktop" 
-                    "p7zip" 
-                    "zip" 
-                    "unzip" 
-                    "unrar" 
-                    "wget" 
-                    "numlockx"
-                    "polkit"
-                    "compton" 
-                    "pamac-aur")
-
-readonly PKG_AUDIO=("spotify" 
-                    "playerctl" 
-                    "pavucontrol")
-
+readonly PKG_EXTRA=(
+    "bash-completion" 
+    "zsh" 
+    "xdg-user-dirs" 
+    "vim"
+    "telegram-desktop" 
+    "p7zip" 
+    "zip" 
+    "unzip" 
+    "unrar" 
+    "wget" 
+    "numlockx"
+    "polkit"
+    "compton" 
+    "pamac-aur"
+    "google-chrome")
+readonly PKG_AUDIO=(
+    "alsa-utils" 
+    "alsa-oss" 
+    "alsa-lib" 
+    "pulseaudio"
+    "spotify" 
+    "playerctl" 
+    "pavucontrol")
 readonly PKG_VIDEO=("mpv")
-
-readonly PKG_REDE=("google-chrome" 
-                   "network-manager-applet" 
-                   "networkmanager-pptp" 
-                   "remmina" 
-                   "rdesktop" 
-                   "remmina-plugin-rdesktop")
-
-readonly PKG_DEV=("jdk8" 
-                  "intellij-idea-ultimate-edition-jre" 
-                  "intellij-idea-ultimate-edition"
-                  "visual-studio-code-bin"
-                  "virtualbox" 
-                  "virtualbox-host-modules-arch" 
-                  "linux-headers")
-
-readonly PKG_THEME=("adapta-gtk-theme" 
-                    "flat-remix-git"  
-                    "pop-icon-theme-git" 
-                    "papirus-icon-theme-git" 
-                    "arc-gtk-theme-git" 
-                    "bibata-cursor-theme"
-                    "hardcode-tray-git" 
-                    "gtk-engine-murrine" 
-                    "lib32-gtk-engine-murrine"
-                    "plank")
-
-readonly PKG_FONT=("ttf-iosevka-term-ss09" 
-                   "ttf-ubuntu-font-family" 
-                   "ttf-font-awesome" 
-                   "ttf-monoid" 
-                   "ttf-fantasque-sans-mono" 
-                   "ttf-ms-fonts")
-
+readonly DISPLAY_SERVER=(
+    "xorg-server" 
+    "xorg-xinit" 
+    "xorg-xprop" 
+    "xorg-xbacklight" 
+    "xorg-xdpyinfo" 
+    "xorg-xrandr")
+readonly VGA_INTEL=(
+    "mesa" 
+    "xf86-video-intel" 
+    "lib32-mesa" 
+    "vulkan-intel")
+readonly VGA_VBOX=(
+    "virtualbox-guest-utils" 
+    "virtualbox-guest-modules-arch")
+readonly PKG_REDE=(
+    "networkmanager"
+    "network-manager-applet" 
+    "networkmanager-pptp" 
+    "remmina" 
+    "rdesktop" 
+    "remmina-plugin-rdesktop")
+readonly PKG_DEV=(
+    "jdk8" 
+    "intellij-idea-ultimate-edition-jre" 
+    "intellij-idea-ultimate-edition"
+    "visual-studio-code-bin"
+    "virtualbox" 
+    "virtualbox-host-modules-arch" 
+    "linux-headers")
+readonly PKG_THEME=(
+    "adapta-gtk-theme" 
+    "flat-remix-git"  
+    "pop-icon-theme-git" 
+    "papirus-icon-theme-git" 
+    "arc-gtk-theme-git" 
+    "bibata-cursor-theme"
+    "hardcode-tray-git" 
+    "gtk-engine-murrine" 
+    "lib32-gtk-engine-murrine"
+    "plank")
+readonly PKG_FONT=(
+    "ttf-iosevka-term-ss09" 
+    "ttf-ubuntu-font-family" 
+    "ttf-font-awesome" 
+    "ttf-monoid" 
+    "ttf-fantasque-sans-mono" 
+    "ttf-ms-fonts")
 readonly PKG_NOTE=("xf86-input-libinput")
 
 #===============================================================================
@@ -114,33 +129,78 @@ readonly PKG_NOTE=("xf86-input-libinput")
 #===============================================================================
 
 # XFCE
-readonly DE_XFCE="xfce4 xfce4-goodies"
-readonly DE_XFCE_EXTRA="file-roller xfce4-whiskermenu-plugin alacarte thunar-volman thunar-archive-plugin gvfs xfce4-dockbarx-plugin xfce-theme-greybird elementary-xfce-icons xfce-polkit-git"
+readonly DE_XFCE=(
+    "xfce4" 
+    "xfce4-goodies")
+readonly DE_XFCE_EXTRA=(
+    "file-roller" 
+    "xfce4-whiskermenu-plugin" 
+    "alacarte" 
+    "thunar-volman" 
+    "thunar-archive-plugin" 
+    "gvfs" 
+    "xfce4-dockbarx-plugin" 
+    "xfce-theme-greybird" 
+    "elementary-xfce-icons" 
+    "xfce-polkit-git")
 
 # Plasma
-readonly DE_KDE="plasma-meta sddm sddm-kcm"
+readonly DE_KDE=(
+    "plasma-meta" 
+    "sddm" 
+    "sddm-kcm")
 
 # Deepin
-readonly DE_DEEPIN="deepin deepin-extra"
+readonly DE_DEEPIN=(
+    "deepin" 
+    "deepin-extra")
 
 # Cinnamon
-readonly DE_CINNAMON="cinnamon cinnamon-translations"
+readonly DE_CINNAMON=(
+    "cinnamon" 
+    "cinnamon-translations")
 
 #===============================================================================
 #---------------------------WINDOW MANAGER's------------------------------------
 #===============================================================================
 
 # I3wm
-readonly WM_I3="i3-gaps i3lock rofi mlocate dunst polybar nitrogen tty-clock lxappearance"
+readonly WM_I3=(
+    "i3-gaps" 
+    "i3lock" 
+    "rofi" 
+    "mlocate" 
+    "dunst" 
+    "polybar" 
+    "nitrogen" 
+    "tty-clock" 
+    "lxappearance")
 
 # Openbox
-readonly WM_OPENBOX="openbox obconf openbox-themes obmenu lxappearance-obconf tint2"
+readonly WM_OPENBOX=(
+    "openbox" 
+    "obconf" 
+    "openbox-themes" 
+    "obmenu" 
+    "lxappearance-obconf" 
+    "tint2")
 
 #===============================================================================
 #---------------------------DISPLAY MANAGER's-----------------------------------
 #===============================================================================
-readonly DM="lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings lightdm-slick-greeter lightdm-settings light-locker"
-readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw-grid=false\\\nbackground=/usr/share/backgrounds/xfce/xfce-blue.jpg\\\nactivate-numlock=true"
+readonly DM=(
+    "lightdm" 
+    "lightdm-gtk-greeter" 
+    "lightdm-gtk-greeter-settings" 
+    "lightdm-slick-greeter" 
+    "lightdm-settings" 
+    "light-locker")
+readonly SLICK_CONF="[Greeter]
+                    show-a11y=false
+                    show-keyboard=false
+                    draw-grid=false
+                    background=/usr/share/backgrounds/xfce/xfce-blue.jpg
+                    activate-numlock=true"
 
 
 #===============================================================================
@@ -229,22 +289,22 @@ function criar_volume_fisico(){
     pvcreate "${HD}2" 1> /dev/null
 
     _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
-    vgcreate vg1 "${HD}2" 1> /dev/null
+    vgcreate vg1 "${HD}2" 2> /dev/null
 
     _msg info "Criando o volume /root com ${MAGENTA}50G${SEMCOR}."
-    lvcreate -L 50G -n root vg1 1> /dev/null
+    lvcreate -L 50G -n root vg1 2> /dev/null
 
     #_msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
     #lvcreate -L 4G -n swap vg1
 
     _msg info "Criando o volume /home com o ${MAGENTA}restante do HD${SEMCOR}."
-    lvcreate -l 100%FREE -n home vg1 &> /dev/null
+    lvcreate -l 100%FREE -n home vg1 2> /dev/null
 }
 
 function formatar_volume(){
     mkfs.vfat -F32 "${HD}1" -n BOOT 1> /dev/null
-    mkfs.ext4 /dev/mapper/vg1-root 1> /dev/null
-    mkfs.ext4 /dev/mapper/vg1-home 1> /dev/null
+    mkfs.ext4 /dev/mapper/vg1-root &> /dev/null
+    mkfs.ext4 /dev/mapper/vg1-home &> /dev/null
 }
 
 function montar_volume(){
@@ -327,11 +387,21 @@ function criar_usuario(){
     _chroot "echo \"$HOST\" > /etc/hostname"
 }
 
-function instalar_rede(){
-    (_chroot "pacman -S networkmanager --needed --noconfirm" 1> /dev/null
-    _chroot "systemctl enable NetworkManager.service" 2> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o networkmanager:" $! 
+function instalar_gerenciador_aur(){
+     (_chroot "pacman -S git --needed --noconfirm" &> /dev/null
+    _chuser "cd /home/${MY_USER} && git clone https://aur.archlinux.org/trizen.git && 
+             cd /home/${MY_USER}/trizen && makepkg -si --noconfirm && 
+             rm -rf /home/${MY_USER}/trizen" &> /dev/null) &
+    _spinner "${VERDE}->${SEMCOR} Instalando o Trizen:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
+}
+
+function instalar_pacote(){
+    for i in "${1[@]}"; do
+        (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
+        _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
+        echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
+    done 
 }
 
 function instalar_bootloader_refind(){
@@ -361,43 +431,14 @@ function instalar_bootloader_grub(){
 
 }
 
-function instalar_display_server(){
-    (_chroot "pacman -S ${DISPLAY_SERVER} --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o display server:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-}
-
-function instalar_video(){
-     (
-        if [ "$(systemd-detect-virt)" = "none" ]; then
-            _chroot "pacman -S ${VGA_INTEL} --needed --noconfirm" &> /dev/null
-        else
-            _chroot "pacman -S ${VGA_VBOX} --needed --noconfirm" 1> /dev/null
-        fi
-    ) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o drive de video:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-}
-
-function instalar_gerenciador_aur(){
-     (_chroot "pacman -S git --needed --noconfirm" &> /dev/null
-    _chuser "cd /home/${MY_USER} && git clone https://aur.archlinux.org/trizen.git && 
-             cd /home/${MY_USER}/trizen && makepkg -si --noconfirm && 
-             rm -rf /home/${MY_USER}/trizen" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o Trizen:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-}
-
 function instalar_desktop_environment(){
-     (_chuser "trizen -S ${DE_CINNAMON} --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o desktop environment:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
+    _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
+    instalar_pacote "${1}"
 }
 
 function instalar_window_manager(){
-   (_chuser "trizen -S ${WM_I3} --needed --noconfirm" &> /dev/null) &
-   _spinner "${VERDE}->${SEMCOR} Instalando o window manager:" $! 
-   echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
+    _msg info "${NEGRITO}Instalando window manager:${SEMCOR}"
+    instalar_pacote "${1}"
 }
 
 function instalar_display_manager(){
@@ -406,12 +447,6 @@ function instalar_display_manager(){
     _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
     _chroot "systemctl enable lightdm.service" &> /dev/null) &
     _spinner "${VERDE}->${SEMCOR} Instalando o display manager:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-}
-
-function instalar_som(){
-    (_chroot "pacman -S alsa-utils alsa-oss alsa-lib pulseaudio --needed --noconfirm" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o pacote de audio:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -425,50 +460,71 @@ function clonar_dotfiles(){
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
-function instalar_pacotes_extras(){
-     _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
-    for i in "${PKG_EXTRA[@]}"; do
-        (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
-        _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
-        echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-    done 
-    _chuser "xdg-user-dirs-update"
+function pacote_audio(){
+    _msg info "${NEGRITO}Instalando pacotes de audio:${SEMCOR}"
+    instalar_pacote "${PKG_AUDIO}"
 }
 
-function instalar_pacotes_desenvolvedor(){
+function pacote_video(){
+    _msg info "${NEGRITO}Instalando pacotes de vídeo:${SEMCOR}"
+    instalar_pacote "$DISPLAY_SERVER"
+    if [ "$(systemd-detect-virt)" = "none" ]; then
+        instalar_pacote "${VGA_INTEL}"
+    else
+        instalar_pacote "${VGA_VBOX}"
+    fi
+    instalar_pacote "${PKG_VIDEO}"
+}
+
+function pacote_rede(){
+    _msg info "${NEGRITO}Instalando pacotes de rede:${SEMCOR}"
+    instalar_pacote "${PKG_REDE}"
+    _chroot "systemctl enable NetworkManager.service" 2> /dev/null
+}
+
+function pacote_fonte(){
+    _msg info "${NEGRITO}Instalando fontes:${SEMCOR}"
+    instalar_pacote "${PKG_FONT}"
+}
+
+function pacote_theme(){
+    _msg info "${NEGRITO}Instalando temas:${SEMCOR}"
+    instalar_pacote "${PKG_THEME}"
+}
+
+function pacote_desenvolvedor(){
     _chroot "mount -o remount,size=4G,noatime /tmp"
     _msg info "${NEGRITO}Instalando aplicativos para desenvolvimento:${SEMCOR}"
-    for i in "${PKG_DEV[@]}"; do
-         (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
-        _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
-        echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
-    done 
+    instalar_pacote "${PKG_DEV}"
     _chroot "archlinux-java set java-8-jdk"
 }
 
-function configurar_sistema() {
+function pacote_diversos(){
+    _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
+    instalar_pacote "${PKG_EXTRA}"
+    _chuser "xdg-user-dirs-update"
+}
 
+function configurar_sistema() {
     _msg info "${NEGRITO}Entrando no novo sistema.${SEMCOR}"
     configurar_idioma
     configurar_hora
-    #criar_swapfile
     configurar_pacman
     criar_usuario
-    instalar_rede
-    #instalar_bootloader_refind
-    instalar_bootloader_grub
-    instalar_display_server
-    instalar_video
     instalar_gerenciador_aur
-    instalar_desktop_environment
-    #instalar_window_manager
-    instalar_display_manager
-    
-    if [ "$(systemd-detect-virt)" = "none" ]; then
-        instalar_pacotes_extras
-        instalar_pacotes_desenvolvedor
+    instalar_desktop_environment "${DE_CINNAMON}" #TROCAR PARA A DE PREFERIDA
+    instalar_display_manager "${WM_I3}"
+    if [ "$(systemd-detect-virt)" != "none" ]; then
+        pacote_audio
+        pacote_video
+        pacote_rede
+        pacote_fonte
+        pacote_theme
+        pacote_desenvolvedor
+        pacote_diversos
         clonar_dotfiles
     fi
+    instalar_bootloader_grub
 
     _msg info 'Sistema instalado com sucesso!'
     _msg erro 'Retire a midia do computador e logo em seguida reinicie a máquina.'

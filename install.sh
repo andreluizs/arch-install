@@ -195,12 +195,7 @@ readonly DM=(
     "lightdm-slick-greeter" 
     "lightdm-settings" 
     "light-locker")
-readonly SLICK_CONF="[Greeter]
-                    show-a11y=false
-                    show-keyboard=false
-                    draw-grid=false
-                    background=/usr/share/backgrounds/xfce/xfce-blue.jpg
-                    activate-numlock=true"
+readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw-grid=false\\\nbackground=/usr/share/backgrounds/xfce/xfce-blue.jpg\\\nactivate-numlock=true"
 
 
 #===============================================================================
@@ -286,7 +281,7 @@ function criar_volume_fisico(){
     parted -s "$HD" set 2 lvm on 1> /dev/null
     
     _msg info "Criando o volume físico: "${MAGENTA}${HD}2"${SEMCOR}."
-    pvcreate "${HD}2" 1> /dev/null
+    pvcreate "${HD}2" &> /dev/null
 
     _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
     vgcreate vg1 "${HD}2" 2> /dev/null
@@ -397,7 +392,8 @@ function instalar_gerenciador_aur(){
 }
 
 function instalar_pacote(){
-    for i in "$1[@]"; do
+    local pacote=$1
+    for i in "${pacote[@]}"; do
         (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
         _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
         echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"

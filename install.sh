@@ -397,7 +397,7 @@ function instalar_gerenciador_aur(){
 }
 
 function instalar_pacote(){
-    for i in "${1[@]}"; do
+    for i in "$1[@]"; do
         (_chuser "trizen -S ${i} --needed --noconfirm --quiet --noinfo" &> /dev/null) &
         _spinner "${VERDE}->${SEMCOR} Instalando o pacote ${i}:" $! 
         echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"

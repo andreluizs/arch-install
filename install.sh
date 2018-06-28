@@ -131,8 +131,7 @@ readonly PKG_NOTE=("xf86-input-libinput")
 # XFCE
 readonly DE_XFCE=(
     "xfce4" 
-    "xfce4-goodies")
-readonly DE_XFCE_EXTRA=(
+    "xfce4-goodies"
     "file-roller" 
     "xfce4-whiskermenu-plugin" 
     "alacarte" 
@@ -276,7 +275,7 @@ function criar_volume_fisico(){
     parted "$HD" mkpart ESP fat32 "${boot_start}MiB" "${boot_end}MiB" &> /dev/null
     parted "$HD" set 1 boot on &> /dev/null
 
-    _msg info "Criando a partição: "${MAGENTA}${HD}2${SEMCOR}." como ${MAGENTA}lvm.${SEMCOR}."
+    _msg info "Criando a partição: "${MAGENTA}${HD}2${SEMCOR}" como ${MAGENTA}lvm${SEMCOR}."
     parted "$HD" mkpart primary ext4 "${boot_end}MiB" 100% &> /dev/null
     parted -s "$HD" set 2 lvm on &> /dev/null
     
@@ -289,8 +288,8 @@ function criar_volume_fisico(){
     _msg info "Criando o volume /root com ${MAGENTA}${ROOT_SIZE}MB${SEMCOR}."
     lvcreate -L "${ROOT_SIZE}MiB" -n root vg1 &> /dev/null
 
-    #_msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
-    #lvcreate -L 4G -n swap vg1
+    _msg info "Criando o volume swap com ${MAGENTA}4G${SEMCOR}."
+    lvcreate -L "${SWAP_SIZE}MiB" -n swap vg1 &> /dev/null
 
     _msg info "Criando o volume /home com o ${MAGENTA}restante do HD${SEMCOR}."
     lvcreate -l 100%FREE -n home vg1 &> /dev/null
@@ -298,6 +297,7 @@ function criar_volume_fisico(){
 
 function formatar_volume(){
     mkfs.vfat -F32 "${HD}1" -n BOOT 1> /dev/null
+    mkswap -L SWAP /dev/mapper/vg1-swap 1> /dev/null
     mkfs.ext4 /dev/mapper/vg1-root &> /dev/null
     mkfs.ext4 /dev/mapper/vg1-home &> /dev/null
 }
@@ -305,6 +305,7 @@ function formatar_volume(){
 function montar_volume(){
     mount /dev/mapper/vg1-root /mnt 1> /dev/null
     mkdir -p /mnt/boot 1> /dev/null
+    swapon /dev/mapper/vg1-swap 1> /dev/null
     mkdir -p /mnt/home 1> /dev/null
     mount "${HD}1" /mnt/boot 1> /dev/null
     mount /dev/mapper/vg1-home /mnt/home 1> /dev/null
@@ -413,18 +414,14 @@ function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
     _chroot "pacman -S grub efibootmgr os-prober --needed --noconfirm" 1> /dev/null
     _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB" &> /dev/null
-     if [ "$(systemd-detect-virt)" != "none" ]; then
+    if [ "$(systemd-detect-virt)" != "none" ]; then
         _chroot "mkdir -p /boot/EFI/BOOT"
         _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
-     fi
-     # add o lvm2 ao hooks
-     _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
-     #_chroot "sed '/block/a lvm2' /etc/mkinitcpio.conf"
-
-     # add o lvm no grub modules
-     _chroot "sed -i '/GRUB_PRELOAD_MODULES=\"\>/a lvm ' /etc/default/grub"
-     _chroot "grub-mkconfig -o /boot/grub/grub.cfg" 1> /dev/null
-     _chroot "mkinitcpio -p linux" 1> /dev/null
+    fi
+    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
+    _chroot "sed -i 's/^GRUB_PRELOAD_MODULES.*/GRUB_PRELOAD_MODULES=\"part_gpt part_msdos lvm\"/' /etc/default/grub"
+    _chroot "grub-mkconfig -o /boot/grub/grub.cfg" &> /dev/null
+    _chroot "mkinitcpio -p linux" &> /dev/null
 
 }
 
@@ -457,14 +454,14 @@ function clonar_dotfiles(){
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
-function pacote_audio(){
+function instalar_pacotes_audio(){
     _msg info "${NEGRITO}Instalando pacotes de audio:${SEMCOR}"
     instalar_pacote "${PKG_AUDIO[@]}"
 }
 
-function pacote_video(){
+function instalar_pacotes_video(){
     _msg info "${NEGRITO}Instalando pacotes de vídeo:${SEMCOR}"
-    instalar_pacote "$DISPLAY_SERVER"
+    instalar_pacote "${DISPLAY_SERVER[@]}"
     if [ "$(systemd-detect-virt)" = "none" ]; then
         instalar_pacote "${VGA_INTEL[@]}"
     else
@@ -473,30 +470,30 @@ function pacote_video(){
     instalar_pacote "${PKG_VIDEO[@]}"
 }
 
-function pacote_rede(){
+function instalar_pacotes_rede(){
     _msg info "${NEGRITO}Instalando pacotes de rede:${SEMCOR}"
     instalar_pacote "${PKG_REDE[@]}"
     _chroot "systemctl enable NetworkManager.service" 2> /dev/null
 }
 
-function pacote_fonte(){
+function instalar_pacotes_fonte(){
     _msg info "${NEGRITO}Instalando fontes:${SEMCOR}"
     instalar_pacote "${PKG_FONT[@]}"
 }
 
-function pacote_theme(){
+function instalar_pacotes_temas(){
     _msg info "${NEGRITO}Instalando temas:${SEMCOR}"
     instalar_pacote "${PKG_THEME[@]}"
 }
 
-function pacote_desenvolvedor(){
+function instalar_pacotes_desenvolvimento(){
     _chroot "mount -o remount,size=4G,noatime /tmp"
     _msg info "${NEGRITO}Instalando aplicativos para desenvolvimento:${SEMCOR}"
     instalar_pacote "${PKG_DEV[@]}"
     _chroot "archlinux-java set java-8-jdk"
 }
 
-function pacote_diversos(){
+function instalar_pacotes_diversos(){
     _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
     instalar_pacote "${PKG_EXTRA[@]}"
     _chuser "xdg-user-dirs-update"
@@ -509,16 +506,17 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_gerenciador_aur
-    instalar_desktop_environment "${DE_CINNAMON[@]}" #TROCAR PARA A DE PREFERIDA
-    instalar_display_manager "${WM_I3[@]}"
-    pacote_audio
-    pacote_video
-    pacote_rede
+    instalar_desktop_environment "${DE_XFCE[@]}" #TROCAR PARA A DE PREFERIDA
+    instalar_display_manager
+    instalar_pacotes_audio
+    instalar_pacotes_video
+    instalar_pacotes_rede
     if [ "$(systemd-detect-virt)" = "none" ]; then
-        pacote_fonte
-        pacote_theme
-        pacote_desenvolvedor
-        pacote_diversos
+        instalar_window_manager "${WM_I3[@]}"
+        instalar_pacotes_fonte
+        instalar_pacotes_temas
+        instalar_pacotes_desenvolvimento
+        instalar_pacotes_diversos
         clonar_dotfiles
     fi
     instalar_bootloader_grub

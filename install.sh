@@ -22,16 +22,10 @@ readonly NEGRITO='\e[1m'
 readonly SEMCOR='\e[0m'
 
 # Usuário
-MY_USER=${MY_USER:-'andre'}
-MY_USER_NAME=${MY_USER_NAME:-'André Luiz dos Santos'}
-MY_USER_PASSWD=${MY_USER_PASSWD:-'andre'}
 ROOT_PASSWD=${ROOT_PASSWD:-'root'}
 
 # HD
 HD=${HD:-'/dev/sda'}
-
-# Nome da maquina
-HOST=${HOST:-"arch-note"}
 
 # Tamanho das partições em MB
 BOOT_SIZE=${BOOT_SIZE:-512}
@@ -83,12 +77,13 @@ readonly DISPLAY_SERVER=(
     "xorg-xrandr")
 readonly VGA_INTEL=(
     "mesa" 
-    "xf86-video-intel" 
     "lib32-mesa" 
+    "xf86-video-intel" 
     "vulkan-intel")
 readonly VGA_VBOX=(
-    "virtualbox-guest-utils" 
-    "virtualbox-guest-modules-arch")
+    "mesa" 
+    "lib32-mesa" 
+    "virtualbox-guest-utils")
 readonly PKG_REDE=(
     "networkmanager"
     "network-manager-applet" 
@@ -240,20 +235,63 @@ function bem_vindo() {
     echo -e "                         Versão: 1.0.0b - Data: 03/2018                     "
     echo -e "----------------------------------------------------------------------------${SEMCOR}${MAGENTA}"
     echo -e "                  Esse instalador encontra-se em versão beta.              "
-    echo -en "                 Usar esse instalador é por sua conta e risco.${SEMCOR}    "
+    echo -e "                 Usar esse instalador é por sua conta e risco.${SEMCOR}    "
+    echo -e "----------------------------------------------------------------------------"
 }
 
-function iniciar() {
+function iniciar() { 
+    echo -en "${AMARELO}Esse processo irá apagar todo o seu disco, tem certeza que deseja continuar? [s/N]: ${SEMCOR}"
+    read -n 1 OP
+    OP=${OP:-"N"}
+    case $OP in
+        (s|S)
+            ler_informacoes_usuario
+            echo -e "${AMARELO}Começando a instalação automatica!${SEMCOR}"
+            configuracao_inicial
+            criar_volume_fisico
+            formatar_volume
+            montar_volume
+            instalar_sistema
+            configurar_sistema
+        ;;
+        (n|N) 
+            echo -e "${AMARELO}Instalação abortada!${SEMCOR}\n"; 
+            exit 0 
+        ;;
+        (*) 
+            echo -e "${VERMELHO}Opção Inválida${SEMCOR}"; 
+            exit 0 
+        ;;
+    esac
+}
+    
+function ler_informacoes_usuario(){
+    echo -e "\n"
+    echo -e "${AZUL}->${SEMCOR} ${NEGRITO}Antes de começar, preciso de algumas informações:${SEMCOR}"
+    echo -en "${AZUL}->${SEMCOR} Qual seu nome completo?: "
+    read MY_USER_NAME
+    MY_USER_NAME=${MY_USER_NAME:-'André Luiz dos Santos'}
+    
+    echo -en "${AZUL}->${SEMCOR} Como gostaria que fosse seu usuário?: "
+    read MY_USER
+    MY_USER=${MY_USER:-'andre'}
+    MY_USER_PASSWD=${MY_USER:-'andre'}
+
+    echo -en "${AZUL}->${SEMCOR} Que nome gostaria de dar para seu PC?: "
+    read HOST
+    HOST=${HOST:-"arch-note"}
+
+    echo -e "${AZUL}->${SEMCOR} ${NEGRITO}Lembre-se de mudar sua senha, por padrão ela é igual ao seu user:${SEMCOR} ${MAGENTA}${MY_USER}${SEMCOR}"
     
     echo -e "${NEGRITO}"
-    echo -e "================================= DEFAULT ==================================${SEMCOR}"
+    echo -e "============================ INFORMAÇÕES DO USUÁRIO ========================${SEMCOR}"
     echo -e "Nome: ${MAGENTA}${MY_USER_NAME}${SEMCOR}            User: ${MAGENTA}${MY_USER}${SEMCOR}        Maquina: ${MAGENTA}${HOST}${SEMCOR}       "
     echo -e "Device: ${MAGENTA}${HD}${SEMCOR}   /boot: ${MAGENTA}${BOOT_SIZE}MB${SEMCOR}    /root: ${MAGENTA}${ROOT_SIZE}MB${SEMCOR}    /home: ${MAGENTA}restante do HD${SEMCOR}"
     echo -e "============================================================================"
-    echo -en "${SEMCOR}"
+    echo -en "${SEMCOR}"    
+}
 
-    echo -e "${AMARELO}Começando a instalação automatica!${SEMCOR}"
-    
+function configuracao_inicial(){
     # Hora
     _msg info 'Sincronizando a hora.'
     timedatectl set-ntp true
@@ -268,6 +306,9 @@ function criar_volume_fisico(){
     local boot_start=1
     local boot_end=$((BOOT_SIZE + boot_start))
 
+    _msg info "Apagando partições antigas."
+    #dd if=/dev/zero of="${HD}" bs=512 count=1 conv=notrunc
+    
     _msg info "Definindo o device: ${HD} para GPT."
     parted -s "$HD" mklabel gpt 1> /dev/null
 
@@ -516,9 +557,9 @@ function configurar_sistema() {
         instalar_pacotes_fonte
         instalar_pacotes_temas
         instalar_pacotes_desenvolvimento
-        instalar_pacotes_diversos
         clonar_dotfiles
     fi
+    instalar_pacotes_diversos
     instalar_bootloader_grub
 
     _msg info "${VERDE}Sistema instalado com sucesso!${SEMCOR}"
@@ -530,8 +571,3 @@ function configurar_sistema() {
 clear
 bem_vindo
 iniciar
-criar_volume_fisico
-formatar_volume
-montar_volume
-instalar_sistema
-configurar_sistema

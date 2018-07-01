@@ -81,8 +81,6 @@ readonly VGA_INTEL=(
     "xf86-video-intel" 
     "vulkan-intel")
 readonly VGA_VBOX=(
-    "mesa" 
-    "lib32-mesa" 
     "virtualbox-guest-utils")
 readonly PKG_REDE=(
     "networkmanager"
@@ -93,9 +91,12 @@ readonly PKG_REDE=(
     "remmina-plugin-rdesktop")
 readonly PKG_DEV=(
     "jdk8" 
+    "nodejs" 
+    "docker" 
+    "docker-compose"
     "intellij-idea-ultimate-edition-jre" 
-    "intellij-idea-ultimate-edition"
-    "visual-studio-code-bin"
+    "intellij-idea-ultimate-edition" 
+    "visual-studio-code-bin" 
     "virtualbox" 
     "virtualbox-host-modules-arch" 
     "linux-headers")
@@ -154,6 +155,16 @@ readonly DE_CINNAMON=(
     "cinnamon" 
     "cinnamon-translations")
 
+# MATE
+readonly DE_MATE=(
+    "mate" 
+    "mate-extra")
+
+    # MATE
+readonly DE_GNOME=(
+    "gnome" 
+    "gnome-extra"
+    "gnome-tweak-tool")
 #===============================================================================
 #---------------------------WINDOW MANAGER's------------------------------------
 #===============================================================================
@@ -234,13 +245,15 @@ function bem_vindo() {
     echo -e "                  André Luiz dos Santos (andreluizs@live.com)               "
     echo -e "                         Versão: 1.0.0b - Data: 03/2018                     "
     echo -e "----------------------------------------------------------------------------${SEMCOR}${MAGENTA}"
-    echo -e "                  Esse instalador encontra-se em versão beta.              "
-    echo -e "                 Usar esse instalador é por sua conta e risco.${SEMCOR}    "
+    echo -e "                  Esse instalador encontra-se em versão beta.               "
+    echo -e "                 Usar esse instalador é por sua conta e risco.${SEMCOR}     "
     echo -e "----------------------------------------------------------------------------"
 }
 
-function iniciar() { 
-    echo -en "${AMARELO}Esse processo irá apagar todo o seu disco, tem certeza que deseja continuar? [s/N]: ${SEMCOR}"
+function iniciar() {
+    loadkeys br-abnt2 
+    echo -e "Esse processo irá ${NEGRITO}${VERMELHO}apagar${SEMCOR} todo o seu disco.${SEMCOR}"
+    echo -en "Tem certeza que deseja continuar? [s/${NEGRITO}N${SEMCOR}]: "
     read -n 1 OP
     OP=${OP:-"N"}
     case $OP in
@@ -255,14 +268,19 @@ function iniciar() {
             configurar_sistema
         ;;
         (n|N) 
-            echo -e "${AMARELO}Instalação abortada!${SEMCOR}\n"; 
+            echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
             exit 0 
         ;;
         (*) 
-            echo -e "${VERMELHO}Opção Inválida${SEMCOR}"; 
+            echo -e "Opção inválida";
+            sleep 2 && iniciar
             exit 0 
         ;;
     esac
+}
+
+function limpar_disco(){
+    wipefs -a -f "${HD}"
 }
     
 function ler_informacoes_usuario(){
@@ -307,7 +325,7 @@ function criar_volume_fisico(){
     local boot_end=$((BOOT_SIZE + boot_start))
 
     _msg info "Apagando partições antigas."
-    #dd if=/dev/zero of="${HD}" bs=512 count=1 conv=notrunc
+    #limpar_disco
     
     _msg info "Definindo o device: ${HD} para GPT."
     parted -s "$HD" mklabel gpt 1> /dev/null
@@ -547,18 +565,18 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_gerenciador_aur
-    instalar_desktop_environment "${DE_XFCE[@]}" #TROCAR PARA A DE PREFERIDA
-    instalar_display_manager
     instalar_pacotes_audio
     instalar_pacotes_video
     instalar_pacotes_rede
+    instalar_window_manager "${WM_I3[@]}"
     if [ "$(systemd-detect-virt)" = "none" ]; then
-        instalar_window_manager "${WM_I3[@]}"
+        instalar_desktop_environment "${DE_XFCE[@]}" #TROCAR PARA A DE PREFERIDA
         instalar_pacotes_fonte
         instalar_pacotes_temas
         instalar_pacotes_desenvolvimento
         clonar_dotfiles
     fi
+    instalar_display_manager
     instalar_pacotes_diversos
     instalar_bootloader_grub
 

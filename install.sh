@@ -21,9 +21,6 @@ readonly MAGENTA='\e[35m\e[1m'
 readonly NEGRITO='\e[1m'
 readonly SEMCOR='\e[0m'
 
-# Usuário
-ROOT_PASSWD=${ROOT_PASSWD:-'root'}
-
 # HD
 HD=${HD:-'/dev/sda'}
 
@@ -44,6 +41,7 @@ FallbackNTP=FallbackNTP=0.pool.ntp.org 1.pool.ntp.org 0.fr.pool.ntp.org"
 #-----------------------------------PACOTES-------------------------------------
 #===============================================================================
 readonly PKG_EXTRA=(
+    "archlinux-wallpaper"
     "bash-completion" 
     "zsh" 
     "xdg-user-dirs" 
@@ -81,7 +79,9 @@ readonly VGA_INTEL=(
     "xf86-video-intel" 
     "vulkan-intel")
 readonly VGA_VBOX=(
-    "virtualbox-guest-utils")
+    "mesa" 
+    "lib32-mesa"
+    "virtualbox-guest-modules-arch")
 readonly PKG_REDE=(
     "networkmanager"
     "network-manager-applet" 
@@ -165,6 +165,13 @@ readonly DE_GNOME=(
     "gnome" 
     "gnome-extra"
     "gnome-tweak-tool")
+readonly DE_OP=(
+    [1]=${DE_CINNAMON}
+    [2]=${DE_DEEPIN}
+    [3]=${DE_GNOME}
+    [4]=${DE_KDE}
+    [5]=${DE_MATE}
+    [6]=${DE_XFCE})
 #===============================================================================
 #---------------------------WINDOW MANAGER's------------------------------------
 #===============================================================================
@@ -251,7 +258,7 @@ function bem_vindo() {
 }
 
 function iniciar() {
-    loadkeys br-abnt2 
+    loadkeys br-abnt2
     echo -e "Esse processo irá ${NEGRITO}${VERMELHO}apagar${SEMCOR} todo o seu disco.${SEMCOR}"
     echo -en "Tem certeza que deseja continuar? [s/${NEGRITO}N${SEMCOR}]: "
     read -n 1 OP
@@ -259,7 +266,7 @@ function iniciar() {
     case $OP in
         (s|S)
             ler_informacoes_usuario
-            echo -e "${AMARELO}Começando a instalação automatica!${SEMCOR}"
+            echo -e "${AMARELO}Começando a instalação automática!${SEMCOR}"
             configuracao_inicial
             criar_volume_fisico
             formatar_volume
@@ -272,8 +279,9 @@ function iniciar() {
             exit 0 
         ;;
         (*) 
-            echo -e "Opção inválida";
-            sleep 2 && iniciar
+            echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+            sleep 3
+            echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
             exit 0 
         ;;
     esac
@@ -294,19 +302,62 @@ function ler_informacoes_usuario(){
     read MY_USER
     MY_USER=${MY_USER:-'andre'}
     MY_USER_PASSWD=${MY_USER:-'andre'}
+    ROOT_PASSWD=${MY_USER:-'andre'}
 
     echo -en "${AZUL}->${SEMCOR} Que nome gostaria de dar para seu PC?: "
     read HOST
     HOST=${HOST:-"arch-note"}
 
-    echo -e "${AZUL}->${SEMCOR} ${NEGRITO}Lembre-se de mudar sua senha, por padrão ela é igual ao seu user:${SEMCOR} ${MAGENTA}${MY_USER}${SEMCOR}"
+    ler_desktop_environment
+    ler_window_manager
+
+    echo -e "\n${AZUL}->${SEMCOR} Lembre-se de mudar a senha dos usuários: ${NEGRITO}(root e ${MY_USER})${SEMCOR}."
+    echo -e "${AZUL}->${SEMCOR} Por padrão a senha é igual ao ${NEGRITO}User${SEMCOR}."
     
     echo -e "${NEGRITO}"
     echo -e "============================ INFORMAÇÕES DO USUÁRIO ========================${SEMCOR}"
-    echo -e "Nome: ${MAGENTA}${MY_USER_NAME}${SEMCOR}            User: ${MAGENTA}${MY_USER}${SEMCOR}        Maquina: ${MAGENTA}${HOST}${SEMCOR}       "
-    echo -e "Device: ${MAGENTA}${HD}${SEMCOR}   /boot: ${MAGENTA}${BOOT_SIZE}MB${SEMCOR}    /root: ${MAGENTA}${ROOT_SIZE}MB${SEMCOR}    /home: ${MAGENTA}restante do HD${SEMCOR}"
-    echo -e "============================================================================"
+    echo -e "Nome: ${MY_USER_NAME}"            
+    echo -e "User: ${MY_USER}"                       
+    echo -e "Maquina: ${HOST}"
+    echo -e "Desktop Environment: KDE (Plasma)"
+    echo -e "Window Manager: I3-Gaps"
+    echo -e "Tipo de PC: Desktop"
+    echo -e "${NEGRITO}============================================================================"
     echo -en "${SEMCOR}"    
+}
+
+function ler_desktop_environment(){
+    echo -e "${AZUL}->${SEMCOR} Qual Desktop Environment gostaria de instalar?"
+    echo -e "   [${NEGRITO}0${SEMCOR}] - Nenhum       [3] - Gnome             [6] - XFCE"
+    echo -e "   [1] - Cinnamon     [4] - KDE (Plasma)      "
+    echo -e "   [2] - Deepin DE    [5] - MATE              "
+    echo -en "${AZUL}->${SEMCOR}  "
+    read -n 1 DE
+    DE=${DE:-0}
+    if [[ $DE =~ [^0-6] ]]; then
+        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+        sleep 3
+        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+        exit 0 
+    fi
+
+}
+
+function ler_window_manager(){
+    echo -e "\n${AZUL}->${SEMCOR} Qual Window Manager gostaria de instalar?"
+    echo -e "   [${NEGRITO}0${SEMCOR}] - Nenhum"
+    echo -e "   [1] - i3-gaps"
+    echo -e "   [2] - OpenBox"
+    echo -en "${AZUL}->${SEMCOR}  "
+    read -n 1 WM
+    WM=${WM:-0}
+    if [[ $WM =~ [^0-2] ]]; then
+        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+        sleep 3
+        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+        exit 0 
+    fi
+
 }
 
 function configuracao_inicial(){
@@ -369,9 +420,9 @@ function montar_volume(){
     mount "${HD}1" /mnt/boot 1> /dev/null
     mount /dev/mapper/vg1-home /mnt/home 1> /dev/null
 
-    echo -e "${AZUL}====================== TABELA ===================${SEMCOR}"
+    echo -e "${AZUL}===================================== TABELA ===============================${SEMCOR}"
     lsblk "$HD"
-    echo -e "${AZUL}=================================================${SEMCOR}"
+    echo -e "${AZUL}============================================================================${SEMCOR}"
 }
 
 function instalar_sistema() {
@@ -395,7 +446,7 @@ function configurar_idioma(){
 }
 
 function configurar_hora(){
-    _msg info "Configurando o horário para a região ${TIMEZONE}."
+    _msg info "Configurando o horário para a região ${MAGENTA}${TIMEZONE}${SEMCOR}."
     _chroot "ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime"
     _chroot "hwclock --systohc --localtime"
     _chroot "echo -e \"$NTP\" >> /etc/systemd/timesyncd.conf"
@@ -447,7 +498,7 @@ function instalar_gerenciador_aur(){
     _chuser "cd /home/${MY_USER} && git clone https://aur.archlinux.org/trizen.git && 
              cd /home/${MY_USER}/trizen && makepkg -si --noconfirm && 
              rm -rf /home/${MY_USER}/trizen" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o Trizen:" $! 
+    _spinner "${VERDE}->${SEMCOR} Instalando o AUR Helper:" $! 
     echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
 }
 
@@ -486,7 +537,7 @@ function instalar_bootloader_grub(){
 
 function instalar_desktop_environment(){
     _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
-    instalar_pacote "$@"
+    instalar_pacote "${DE_OP[$DE][$@]}"
 }
 
 function instalar_window_manager(){
@@ -565,23 +616,23 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_gerenciador_aur
+    instalar_desktop_environment
     instalar_pacotes_audio
     instalar_pacotes_video
     instalar_pacotes_rede
-    instalar_window_manager "${WM_I3[@]}"
+    #instalar_window_manager "${WM_I3[@]}"
     if [ "$(systemd-detect-virt)" = "none" ]; then
-        instalar_desktop_environment "${DE_XFCE[@]}" #TROCAR PARA A DE PREFERIDA
         instalar_pacotes_fonte
         instalar_pacotes_temas
         instalar_pacotes_desenvolvimento
         clonar_dotfiles
     fi
     instalar_display_manager
-    instalar_pacotes_diversos
+    #instalar_pacotes_diversos
     instalar_bootloader_grub
 
     _msg info "${VERDE}Sistema instalado com sucesso!${SEMCOR}"
-    _msg erro "${AMARELO}Retire a midia do computador e logo em seguida reinicie a máquina.${SEMCOR}"
+    _msg aten "${AMARELO}Retire a midia do computador e logo em seguida reinicie a máquina.${SEMCOR}"
     umount -R /mnt &> /dev/null
 }
 

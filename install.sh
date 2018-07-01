@@ -529,23 +529,27 @@ function instalar_bootloader_grub(){
 }
 
 function instalar_desktop_environment(){
-    _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
-    case $DE in
-        1)  instalar_pacote "${DE_CINNAMON[@]}" ;;
-        2)  instalar_pacote "${DE_DEEPIN[@]}" ;;
-        3)  instalar_pacote "${DE_GNOME[@]}" ;;
-        4)  instalar_pacote "${DE_KDE[@]}" ;;
-        5)  instalar_pacote "${DE_MATE[@]}" ;;
-        6)  instalar_pacote "${DE_XFCE[@]}" ;;
-    esac
+    if [ $DE -ne 0 ]; then
+        _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
+        case $DE in
+            1)  instalar_pacote "${DE_CINNAMON[@]}" ;;
+            2)  instalar_pacote "${DE_DEEPIN[@]}" ;;
+            3)  instalar_pacote "${DE_GNOME[@]}" ;;
+            4)  instalar_pacote "${DE_KDE[@]}" ;;
+            5)  instalar_pacote "${DE_MATE[@]}" ;;
+            6)  instalar_pacote "${DE_XFCE[@]}" ;;
+        esac
+    fi
 }
 
 function instalar_window_manager(){
-    _msg info "${NEGRITO}Instalando window manager:${SEMCOR}"
-    case $WM in
-        1)  instalar_pacote "${WM_I3[@]}" ;;
-        2)  instalar_pacote "${WM_OPENBOX[@]}" ;;
-    esac
+    if [ $WM -ne 0 ]; then
+        _msg info "${NEGRITO}Instalando window manager:${SEMCOR}"
+        case $WM in
+            1)  instalar_pacote "${WM_I3[@]}" ;;
+            2)  instalar_pacote "${WM_OPENBOX[@]}" ;;
+        esac
+    fi
 }
 
 function instalar_display_manager(){

@@ -160,18 +160,11 @@ readonly DE_MATE=(
     "mate" 
     "mate-extra")
 
-    # MATE
+# Gnome
 readonly DE_GNOME=(
     "gnome" 
     "gnome-extra"
     "gnome-tweak-tool")
-readonly DE_OP=(
-    [1]=${DE_CINNAMON}
-    [2]=${DE_DEEPIN}
-    [3]=${DE_GNOME}
-    [4]=${DE_KDE}
-    [5]=${DE_MATE}
-    [6]=${DE_XFCE})
 #===============================================================================
 #---------------------------WINDOW MANAGER's------------------------------------
 #===============================================================================
@@ -216,10 +209,10 @@ readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw
 
 function _msg() {
     case $1 in
-    info)       echo -e "${VERDE}->${SEMCOR} $2" ;;
-    aten)       echo -e "${AMARELO}->${SEMCOR} $2" ;;
-    erro)       echo -e "${VERMELHO}->${SEMCOR} $2" ;;
-    quest)      echo -ne "${AZUL}->${SEMCOR} $2" ;;
+        info)   echo -e "${VERDE}->${SEMCOR} $2" ;;
+        aten)   echo -e "${AMARELO}->${SEMCOR} $2" ;;
+        erro)   echo -e "${VERMELHO}->${SEMCOR} $2" ;;
+        quest)  echo -ne "${AZUL}->${SEMCOR} $2" ;;
     esac
 }
 
@@ -286,10 +279,6 @@ function iniciar() {
         ;;
     esac
 }
-
-function limpar_disco(){
-    wipefs -a -f "${HD}"
-}
     
 function ler_informacoes_usuario(){
     echo -e "\n"
@@ -316,12 +305,12 @@ function ler_informacoes_usuario(){
     
     echo -e "${NEGRITO}"
     echo -e "============================ INFORMAÇÕES DO USUÁRIO ========================${SEMCOR}"
-    echo -e "Nome: ${MY_USER_NAME}"            
-    echo -e "User: ${MY_USER}"                       
-    echo -e "Maquina: ${HOST}"
-    echo -e "Desktop Environment: KDE (Plasma)"
-    echo -e "Window Manager: I3-Gaps"
-    echo -e "Tipo de PC: Desktop"
+    echo -e "${NEGRITO}Nome:${SEMCOR} ${MY_USER_NAME}"            
+    echo -e "${NEGRITO}User:${SEMCOR} ${MY_USER}"                       
+    echo -e "${NEGRITO}Maquina:${SEMCOR} ${HOST}"
+    echo -e "${NEGRITO}Desktop:${SEMCOR} NULL"
+    echo -e "${NEGRITO}Window Manager:${SEMCOR} NULL"
+    echo -e "${NEGRITO}Tipo de PC:${SEMCOR} NULL"
     echo -e "${NEGRITO}============================================================================"
     echo -en "${SEMCOR}"    
 }
@@ -369,6 +358,10 @@ function configuracao_inicial(){
     _msg info 'Procurando o servidor mais rápido.'
     pacman -Sy reflector --needed --noconfirm &> /dev/null
     reflector --country Brazil --verbose --latest 10 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
+}
+
+function limpar_disco(){
+    wipefs -a -f "${HD}" &> /dev/null
 }
 
 function criar_volume_fisico(){
@@ -537,12 +530,22 @@ function instalar_bootloader_grub(){
 
 function instalar_desktop_environment(){
     _msg info "${NEGRITO}Instalando desktop environment:${SEMCOR}"
-    instalar_pacote "${DE_OP[$DE][$@]}"
+    case $DE in
+        1)  instalar_pacote "${DE_CINNAMON[@]}" ;;
+        2)  instalar_pacote "${DE_DEEPIN[@]}" ;;
+        3)  instalar_pacote "${DE_GNOME[@]}" ;;
+        4)  instalar_pacote "${DE_KDE[@]}" ;;
+        5)  instalar_pacote "${DE_MATE[@]}" ;;
+        6)  instalar_pacote "${DE_XFCE[@]}" ;;
+    esac
 }
 
 function instalar_window_manager(){
     _msg info "${NEGRITO}Instalando window manager:${SEMCOR}"
-    instalar_pacote "$@"
+    case $WM in
+        1)  instalar_pacote "${WM_I3[@]}" ;;
+        2)  instalar_pacote "${WM_OPENBOX[@]}" ;;
+    esac
 }
 
 function instalar_display_manager(){
@@ -616,11 +619,11 @@ function configurar_sistema() {
     configurar_pacman
     criar_usuario
     instalar_gerenciador_aur
-    instalar_desktop_environment
     instalar_pacotes_audio
     instalar_pacotes_video
     instalar_pacotes_rede
-    #instalar_window_manager "${WM_I3[@]}"
+    instalar_window_manager
+    instalar_desktop_environment
     if [ "$(systemd-detect-virt)" = "none" ]; then
         instalar_pacotes_fonte
         instalar_pacotes_temas
@@ -628,7 +631,7 @@ function configurar_sistema() {
         clonar_dotfiles
     fi
     instalar_display_manager
-    #instalar_pacotes_diversos
+    instalar_pacotes_diversos
     instalar_bootloader_grub
 
     _msg info "${VERDE}Sistema instalado com sucesso!${SEMCOR}"

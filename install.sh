@@ -599,8 +599,8 @@ function instalar_display_manager(){
         case $WM in
             1)
                 instalar_pacote "${DM_LIGHTDM[@]}"
-    _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"
-    _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
+                _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"
+                _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
                 _chroot "systemctl enable lightdm.service" &> /dev/null
             ;;
             2)
@@ -688,6 +688,7 @@ function configurar_sistema() {
     instalar_pacotes_temas
     instalar_window_manager
     instalar_desktop_environment
+    instalar_display_manager
     if [ "${OP_DEV}" = "s" ]; then
         instalar_pacotes_desenvolvimento
         #clonar_dotfiles

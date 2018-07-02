@@ -79,9 +79,9 @@ readonly VGA_INTEL=(
     "xf86-video-intel" 
     "vulkan-intel")
 readonly VGA_VBOX=(
-    "mesa" 
-    "lib32-mesa"
-    "virtualbox-guest-modules-arch")
+    "virtualbox-guest-modules-arch"
+    "virtualbox-guest-utils"
+    "linux")
 readonly PKG_REDE=(
     "networkmanager"
     "network-manager-applet" 
@@ -140,10 +140,7 @@ readonly DE_XFCE=(
     "xfce-polkit-git")
 
 # Plasma
-readonly DE_KDE=(
-    "plasma-meta" 
-    "sddm" 
-    "sddm-kcm")
+readonly DE_KDE=("plasma-meta")
 
 # Deepin
 readonly DE_DEEPIN=(
@@ -193,13 +190,21 @@ readonly WM_OPENBOX=(
 #===============================================================================
 #---------------------------DISPLAY MANAGER's-----------------------------------
 #===============================================================================
-readonly DM=(
+readonly DM_LIGHTDM=(
     "lightdm" 
     "lightdm-gtk-greeter" 
     "lightdm-gtk-greeter-settings" 
     "lightdm-slick-greeter" 
     "lightdm-settings" 
     "light-locker")
+readonly DM_SDDM=(
+    "sddm"
+    "sddm-kcm")
+readonly DM_GDM=("gdm")
+readonly DM_LXDM=(
+    "lxdm 
+    lxdm-themes")
+
 readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw-grid=false\\\nbackground=/usr/share/backgrounds/xfce/xfce-blue.jpg\\\nactivate-numlock=true"
 
 
@@ -299,6 +304,8 @@ function ler_informacoes_usuario(){
 
     ler_desktop_environment
     ler_window_manager
+    ler_display_manager
+    #ler_opcao_pacotes
 
     echo -e "\n${AZUL}->${SEMCOR} Lembre-se de mudar a senha dos usuários: ${NEGRITO}(root e ${MY_USER})${SEMCOR}."
     echo -e "${AZUL}->${SEMCOR} Por padrão a senha é igual ao ${NEGRITO}User${SEMCOR}."
@@ -347,6 +354,36 @@ function ler_window_manager(){
         exit 0 
     fi
 
+}
+
+function ler_display_manager(){
+    echo -e "\n${AZUL}->${SEMCOR} Qual Display Manager gostaria de instalar?"
+    echo -e "   [${NEGRITO}0${SEMCOR}] - Nenhum"
+    echo -e "   [1] - LightDM"
+    echo -e "   [2] - GDM"
+    echo -e "   [3] - SDDM"
+    echo -e "   [4] - LXDM"
+    echo -en "${AZUL}->${SEMCOR}  "
+    read -n 1 DM
+    DM=${DM:-0}
+    if [[ $DM =~ [^0-4] ]]; then
+        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+        sleep 3
+        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+        exit 0 
+    fi
+}
+
+function ler_opcao_pacotes(){
+    echo -en "\n${AZUL}->${SEMCOR} Gostaria de instalar pacotes para desenvolvimento de software? [s/${NEGRITO}N${SEMCOR}]: "
+    read -n 1 OP_DEV
+    OP_DEV=${OP_DEV:-"N"}
+    if [[ ${OP_DEV} =~ ^(S|s) ]]; then
+        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+        sleep 3
+        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+        exit 0 
+    fi
 }
 
 function configuracao_inicial(){
@@ -469,7 +506,7 @@ function configurar_pacman(){
     _chroot "pacman-key --init && pacman-key --populate archlinux" &> /dev/null
 }
 
-function criar_usuario(){
+function configurar_usuario(){
     _msg info "Criando o usuário ${MAGENTA}$MY_USER_NAME${SEMCOR}."
     _chroot "useradd -m -g users -G wheel -c \"$MY_USER_NAME\" -s /bin/bash $MY_USER"
 
@@ -553,12 +590,29 @@ function instalar_window_manager(){
 }
 
 function instalar_display_manager(){
-    (_chuser "trizen -S ${DM} --needed --noconfirm" &> /dev/null
+    if [ $DM -ne 0 ]; then
+        _msg info "${NEGRITO}Instalando display manager:${SEMCOR}"
+        case $WM in
+            1)
+                instalar_pacote "${DM_LIGHTDM[@]}"
     _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"
     _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
-    _chroot "systemctl enable lightdm.service" &> /dev/null) &
-    _spinner "${VERDE}->${SEMCOR} Instalando o display manager:" $! 
-    echo -ne "${VERMELHO}[${SEMCOR}${VERDE}100%${SEMCOR}${VERMELHO}]${SEMCOR}\\n"
+                _chroot "systemctl enable lightdm.service" &> /dev/null
+            ;;
+            2)
+                instalar_pacote "${DM_GDM[@]}"
+                _chroot "systemctl enable gdm.service" &> /dev/null
+            ;;
+            3)
+                instalar_pacote "${DM_SDDM[@]}"
+                _chroot "systemctl enable sddm.service" &> /dev/null
+            ;;
+            4)
+                instalar_pacote "${DM_LXDM}"
+                _chroot "systemctl enable lxdm.service" &> /dev/null
+            ;;
+        esac
+    fi
 }
 
 function clonar_dotfiles(){
@@ -621,20 +675,19 @@ function configurar_sistema() {
     configurar_idioma
     configurar_hora
     configurar_pacman
-    criar_usuario
+    configurar_usuario
     instalar_gerenciador_aur
     instalar_pacotes_audio
     instalar_pacotes_video
     instalar_pacotes_rede
+    instalar_pacotes_fonte
+    instalar_pacotes_temas
     instalar_window_manager
     instalar_desktop_environment
     if [ "$(systemd-detect-virt)" = "none" ]; then
-        instalar_pacotes_fonte
-        instalar_pacotes_temas
         instalar_pacotes_desenvolvimento
-        clonar_dotfiles
+        #clonar_dotfiles
     fi
-    instalar_display_manager
     instalar_pacotes_diversos
     instalar_bootloader_grub
 

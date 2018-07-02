@@ -596,7 +596,7 @@ function instalar_window_manager(){
 function instalar_display_manager(){
     if [ $DM -ne 0 ]; then
         _msg info "${NEGRITO}Instalando display manager:${SEMCOR}"
-        case $WM in
+        case $DM in
             1)
                 instalar_pacote "${DM_LIGHTDM[@]}"
                 _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"

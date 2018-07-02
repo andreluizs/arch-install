@@ -79,16 +79,17 @@ readonly VGA_INTEL=(
     "xf86-video-intel" 
     "vulkan-intel")
 readonly VGA_VBOX=(
-    "virtualbox-guest-modules-arch"
-    "virtualbox-guest-utils"
-    "linux")
+    "mesa" 
+    "lib32-mesa" 
+    "virtualbox-guest-modules-arch")
 readonly PKG_REDE=(
     "networkmanager"
     "network-manager-applet" 
     "networkmanager-pptp" 
     "remmina" 
     "rdesktop" 
-    "remmina-plugin-rdesktop")
+    "remmina-plugin-rdesktop"
+    "ufw")
 readonly PKG_DEV=(
     "jdk8" 
     "nodejs" 
@@ -117,8 +118,11 @@ readonly PKG_FONT=(
     "ttf-font-awesome" 
     "ttf-monoid" 
     "ttf-fantasque-sans-mono" 
-    "ttf-ms-fonts")
-readonly PKG_NOTE=("xf86-input-libinput")
+    "ttf-ms-win10")
+readonly PKG_NOTE=(
+    "xf86-input-libinput"
+    "tlp"
+    "tlpui-git")
 
 #===============================================================================
 #---------------------------DESKTOP ENVIRONMENT's-------------------------------
@@ -202,8 +206,8 @@ readonly DM_SDDM=(
     "sddm-kcm")
 readonly DM_GDM=("gdm")
 readonly DM_LXDM=(
-    "lxdm 
-    lxdm-themes")
+    "lxdm" 
+    "lxdm-themes")
 
 readonly SLICK_CONF="[Greeter]\\\nshow-a11y=false\\\nshow-keyboard=false\\\ndraw-grid=false\\\nbackground=/usr/share/backgrounds/xfce/xfce-blue.jpg\\\nactivate-numlock=true"
 
@@ -305,6 +309,7 @@ function ler_informacoes_usuario(){
     ler_desktop_environment
     ler_window_manager
     ler_display_manager
+    ler_tipo_pc
     ler_opcao_pacotes
 
     echo -e "\n${AZUL}->${SEMCOR} Lembre-se de mudar a senha dos usuários: ${NEGRITO}(root e ${MY_USER})${SEMCOR}."
@@ -315,9 +320,9 @@ function ler_informacoes_usuario(){
     echo -e "${NEGRITO}Nome:${SEMCOR} ${MY_USER_NAME}"            
     echo -e "${NEGRITO}User:${SEMCOR} ${MY_USER}"                       
     echo -e "${NEGRITO}Maquina:${SEMCOR} ${HOST}"
-    echo -e "${NEGRITO}Desktop:${SEMCOR} NULL"
-    echo -e "${NEGRITO}Window Manager:${SEMCOR} NULL"
-    echo -e "${NEGRITO}Tipo de PC:${SEMCOR} NULL"
+    echo -e "${NEGRITO}Desktop Environment:${SEMCOR} NULL"
+    echo -e "${NEGRITO}Window Manager:${SEMCOR} ${TPPC}"
+    echo -e "${NEGRITO}Hardware:${SEMCOR} NULL"
     echo -e "${NEGRITO}============================================================================"
     echo -en "${SEMCOR}"    
 }
@@ -374,6 +379,27 @@ function ler_display_manager(){
     fi
 }
 
+function ler_tipo_pc(){
+    echo -e "\n${AZUL}->${SEMCOR} Que tipo de hardware está execuntado o script?"
+    echo -e "   [${NEGRITO}0${SEMCOR}] - Outro (VirtualBox)"
+    echo -e "   [1] - Notebook"
+    echo -e "   [2] - Desktop"
+    echo -en "${AZUL}->${SEMCOR}  "
+    read -n 1 TP_PC
+    TP_PC=${TP_PC:-0}
+    case "${TP_PC}" in
+        0)  TPPC="Outro (VirtualBox)" ;;
+        1)  TPPC="Notebook";;
+        2)  TPPC="Desktop" ;;
+        *)
+        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+        sleep 3
+        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+        exit 0 
+        ;;
+    esac
+}
+
 function ler_opcao_pacotes(){
     echo -en "\n${AZUL}->${SEMCOR} Gostaria de instalar pacotes para desenvolvimento de software? [s/${NEGRITO}N${SEMCOR}]: "
     read -n 1 OP_DEV
@@ -410,7 +436,7 @@ function criar_volume_fisico(){
     local boot_end=$((BOOT_SIZE + boot_start))
 
     _msg info "Apagando partições antigas."
-    #limpar_disco
+    limpar_disco
     
     _msg info "Definindo o device: ${HD} para GPT."
     parted -s "$HD" mklabel gpt 1> /dev/null
@@ -641,6 +667,7 @@ function instalar_pacotes_video(){
         instalar_pacote "${VGA_INTEL[@]}"
     else
         instalar_pacote "${VGA_VBOX[@]}"
+        _chroot "systemctl enable vboxservice.service" &> /dev/null
     fi
     instalar_pacote "${PKG_VIDEO[@]}"
 }
@@ -671,7 +698,7 @@ function instalar_pacotes_desenvolvimento(){
 function instalar_pacotes_diversos(){
     _msg info "${NEGRITO}Instalando pacotes extras:${SEMCOR}"
     instalar_pacote "${PKG_EXTRA[@]}"
-    _chuser "xdg-user-dirs-update"
+    _chuser "export LANG=pt_BR.UTF-8 && xdg-user-dirs-update"
 }
 
 function configurar_sistema() {

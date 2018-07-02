@@ -305,7 +305,7 @@ function ler_informacoes_usuario(){
     ler_desktop_environment
     ler_window_manager
     ler_display_manager
-    #ler_opcao_pacotes
+    ler_opcao_pacotes
 
     echo -e "\n${AZUL}->${SEMCOR} Lembre-se de mudar a senha dos usuários: ${NEGRITO}(root e ${MY_USER})${SEMCOR}."
     echo -e "${AZUL}->${SEMCOR} Por padrão a senha é igual ao ${NEGRITO}User${SEMCOR}."
@@ -378,12 +378,16 @@ function ler_opcao_pacotes(){
     echo -en "\n${AZUL}->${SEMCOR} Gostaria de instalar pacotes para desenvolvimento de software? [s/${NEGRITO}N${SEMCOR}]: "
     read -n 1 OP_DEV
     OP_DEV=${OP_DEV:-"N"}
-    if [[ ${OP_DEV} =~ ^(S|s) ]]; then
-        echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
-        sleep 3
-        echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
-        exit 0 
-    fi
+    case "${OP_DEV}" in
+        N|n) OP_DEV="n" ;;
+        S|s) OP_DEV="s" ;;
+        *) 
+            echo -e "${NEGRITO}\nOpção inválida${SEMCOR}";
+            sleep 3
+            echo -e "${NEGRITO}Instalação abortada!${SEMCOR}\n"; 
+            exit 0 
+        ;;
+    esac
 }
 
 function configuracao_inicial(){
@@ -684,7 +688,7 @@ function configurar_sistema() {
     instalar_pacotes_temas
     instalar_window_manager
     instalar_desktop_environment
-    if [ "$(systemd-detect-virt)" = "none" ]; then
+    if [ "${OP_DEV}" = "s" ]; then
         instalar_pacotes_desenvolvimento
         #clonar_dotfiles
     fi

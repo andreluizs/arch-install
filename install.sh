@@ -81,7 +81,8 @@ readonly VGA_INTEL=(
 readonly VGA_VBOX=(
     "mesa" 
     "lib32-mesa" 
-    "virtualbox-guest-modules-arch")
+    "virtualbox-guest-modules-arch --asdeps" 
+    "virtualbox-guest-utils")
 readonly PKG_REDE=(
     "networkmanager"
     "network-manager-applet" 

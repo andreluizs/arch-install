@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 #===============================================================================
 #   DESCRIPTION: Script para realizar a instalação do Arch Linux.
 #   AUTHOR: André Luiz dos Santos (andreluizs@live.com),
@@ -198,8 +198,6 @@ readonly DM_LIGHTDM=(
     "lightdm" 
     "lightdm-gtk-greeter" 
     "lightdm-gtk-greeter-settings" 
-    "lightdm-slick-greeter" 
-    "lightdm-settings" 
     "light-locker")
 readonly DM_SDDM=(
     "sddm"
@@ -321,8 +319,8 @@ function ler_informacoes_usuario(){
     echo -e "${NEGRITO}User:${SEMCOR} ${MY_USER}"                       
     echo -e "${NEGRITO}Maquina:${SEMCOR} ${HOST}"
     echo -e "${NEGRITO}Desktop Environment:${SEMCOR} NULL"
-    echo -e "${NEGRITO}Window Manager:${SEMCOR} ${TPPC}"
-    echo -e "${NEGRITO}Hardware:${SEMCOR} NULL"
+    echo -e "${NEGRITO}Window Manager:${SEMCOR}"
+    echo -e "${NEGRITO}Hardware:${SEMCOR} ${TPPC}"
     echo -e "${NEGRITO}============================================================================"
     echo -en "${SEMCOR}"    
 }
@@ -450,7 +448,7 @@ function criar_volume_fisico(){
     parted -s "$HD" set 2 lvm on &> /dev/null
     
     _msg info "Criando o volume físico: "${MAGENTA}${HD}2"${SEMCOR}."
-    pvcreate "${HD}2" &> /dev/null
+    pvcreate -f "${HD}2" &> /dev/null
 
     _msg info "Criando o grupo de volumes com o nome: ${MAGENTA}vg1${SEMCOR}."
     vgcreate vg1 "${HD}2" &> /dev/null
@@ -583,11 +581,11 @@ function instalar_bootloader_refind(){
 function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
     _chroot "pacman -S grub efibootmgr os-prober --needed --noconfirm" 1> /dev/null
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB" &> /dev/null
-    if [ "$(systemd-detect-virt)" != "none" ]; then
-        _chroot "mkdir -p /boot/EFI/BOOT"
-        _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
-    fi
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=BOOT" &> /dev/null
+    #if [ "$(systemd-detect-virt)" != "none" ]; then
+        #_chroot "mkdir -p /boot/EFI/BOOT"
+        #_chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
+    #fi
     _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
     _chroot "sed -i 's/^GRUB_PRELOAD_MODULES.*/GRUB_PRELOAD_MODULES=\"part_gpt part_msdos lvm\"/' /etc/default/grub"
     _chroot "grub-mkconfig -o /boot/grub/grub.cfg" &> /dev/null
@@ -625,8 +623,7 @@ function instalar_display_manager(){
         case $DM in
             1)
                 instalar_pacote "${DM_LIGHTDM[@]}"
-                _chroot "sed -i '/^#greeter-session/c \greeter-session=slick-greeter' /etc/lightdm/lightdm.conf"
-                _chroot "echo -e ${SLICK_CONF} > /etc/lightdm/slick-greeter.conf"
+                _chroot "sed -i '/^#greeter-session/c \greeter-session=lightdm-gtk-greeter' /etc/lightdm/lightdm.conf"
                 _chroot "systemctl enable lightdm.service" &> /dev/null
             ;;
             2)

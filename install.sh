@@ -583,10 +583,7 @@ function instalar_bootloader_grub(){
     _msg info "Instalando o Grub bootloader"
     _chroot "pacman -S grub efibootmgr os-prober --needed --noconfirm" 1> /dev/null
     _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=BOOT" &> /dev/null
-    #if [ "$(systemd-detect-virt)" != "none" ]; then
-        #_chroot "mkdir -p /boot/EFI/BOOT"
-        #_chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
-    #fi
+    _chroot "mv /boot/EFI/BOOT/grubx64.efi /boot/EFI/BOOT/bootx64.efi"
     _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
     _chroot "sed -i 's/^GRUB_PRELOAD_MODULES.*/GRUB_PRELOAD_MODULES=\"part_gpt part_msdos lvm\"/' /etc/default/grub"
     _chroot "grub-mkconfig -o /boot/grub/grub.cfg" &> /dev/null

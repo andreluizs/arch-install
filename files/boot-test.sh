@@ -45,7 +45,7 @@ function montar_volume(){
 }
 
 function instalar_sistema(){
-    pacstrap /mnt base base-devel intel-ucode
+    pacstrap /mnt base base-devel intel-ucode tree networkmanager
     genfstab -U -L /mnt >> /mnt/etc/fstab 
     _chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
     _chroot "echo root:root | chpasswd"
@@ -76,12 +76,25 @@ montar_volume
 instalar_sistema
 instalar_systemd_boot
 echo "Sistema Instalado com Sucesso!"
+echo
 tree /mnt/mnt
-echo "- loader.conf:"
+echo
+echo "+------------------------------------------------------+"
+echo "|-------------------- loader.conf ---------------------|"
+echo "+------------------------------------------------------+"
 cat "/mnt${BOOT_MOUNT}/loader/loader.conf"
-echo "- arch.conf:"
+echo
+echo "+------------------------------------------------------+"
+echo "|-------------------- arch.conf -----------------------|"
+echo "+------------------------------------------------------+"
 cat "/mnt${BOOT_MOUNT}/loader/entries/arch.conf"
-echo "- arch-rescue.conf:"
+echo
+echo "+------------------------------------------------------+"
+echo "|----------------- arch-rescue.conf -------------------|"
+echo "+------------------------------------------------------+"
 cat "/mnt${BOOT_MOUNT}/loader/entries/arch-rescue.conf"
-echo "- systemd-boot.hook:"
+echo
+echo "+------------------------------------------------------+"
+echo "|---------------- systemd-boot.hook -------------------|"
+echo "+------------------------------------------------------+"
 cat /mnt/etc/pacman.d/hooks/systemd-boot.hook

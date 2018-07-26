@@ -55,11 +55,16 @@ function instalar_systemd_boot(){
     echo "Instalando o bootloader."
     local loader="timeout 0\ndefault arch"
     local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=/dev/mapper/vg1-root rw"
-    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=/dev/mapper/vg1-root rw\\nsystemd.unit=rescue.target"
+    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=/dev/mapper/vg1-root rw systemd.unit=rescue.target"
+    local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=${BOOT_MOUNT} update"
+    
     _chroot "bootctl --path=${BOOT_MOUNT} install"
     _chroot "echo -e \"${loader}\" > ${BOOT_MOUNT}/loader/loader.conf"
     _chroot "echo -e \"${arch_entrie}\" > ${BOOT_MOUNT}/loader/entries/arch.conf"
     _chroot "echo -e \"${arch_rescue}\" > ${BOOT_MOUNT}/loader/entries/arch-rescue.conf"
+    _chroot "mkdir -p /etc/pacman.d/hooks"
+    _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
+    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block lvm2 filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
     _chroot "mkinitcpio -p linux"
 }
 
@@ -72,6 +77,11 @@ instalar_sistema
 instalar_systemd_boot
 echo "Sistema Instalado com Sucesso!"
 tree /mnt/mnt
+echo "- loader.conf:"
 cat "/mnt${BOOT_MOUNT}/loader/loader.conf"
+echo "- arch.conf:"
 cat "/mnt${BOOT_MOUNT}/loader/entries/arch.conf"
+echo "- arch-rescue.conf:"
 cat "/mnt${BOOT_MOUNT}/loader/entries/arch-rescue.conf"
+echo "- systemd-boot.hook:"
+cat /mnt/etc/pacman.d/hooks/systemd-boot.hook

@@ -29,28 +29,28 @@ function iniciar(){
     umount -R /mnt &> /dev/null || /bin/true
     swapoff "${SSD}4" &> /dev/null || /bin/true
     timedatectl set-ntp true
+    timedatectl set-timezone America/Sao_Paulo
     echo "+ Configurando mirrors."
-    pacman -Sy reflector --needed --noconfirm &> /dev/null
-    reflector --country Brazil --verbose --latest 10 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
+    pacman -Sy tree reflector --needed --noconfirm &> /dev/null
+    reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 function formatar_disco(){
     echo "+ Formatando as partições."
     wipefs -af "${SSD}5" &> /dev/null
     wipefs -af "${HD}2" &> /dev/null
-    mkfs.ext4 -F -L ROOT "${SSD}5" &> /dev/null
-    mkfs.ext4 -F -L HOME "${HD}2" &> /dev/null
+    mkfs.btrfs -f -L ROOT "${SSD}5" &> /dev/null
+    mkfs.btrfs -f -L HOME "${HD}2" &> /dev/null
     mkswap -L SWAP "${SSD}4" &> /dev/null
 }
 
 function montar_disco(){
     echo "+ Montando as partições."
     mount "${SSD}5" /mnt
-    mkdir -p "/mnt/esp"
+    mkdir -p "/mnt/mnt/esp/EFI/arch"
     mkdir -p /mnt/boot
-    mount "${SSD}1" "/mnt/esp"
-    mkdir -p "/mnt/esp/EFI/arch"
-    mount --bind "/mnt/esp/EFI/arch" /mnt/boot
+    mount --bind "/mnt/mnt/esp/EFI/arch" /mnt/boot
+    mount "${SSD}1" "/mnt/mnt/esp"
     mkdir -p /mnt/home
     mount "${HD}2" /mnt/home
     swapon "${SSD}4"
@@ -68,8 +68,7 @@ function instalar_sistema(){
 
     echo "+ Gerando fstab."
     genfstab -U -p /mnt >> /mnt/etc/fstab 
-    _chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
-    _chroot "echo root:root | chpasswd"
+    _chroot "pacman-key --init && pacman-key --populate archlinux" &> /dev/null
 }
 
 function instalar_systemd_boot(){
@@ -79,14 +78,14 @@ function instalar_systemd_boot(){
     local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw systemd.unit=rescue.target"
     local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/esp update"
     
-    _chroot "bootctl --path=/esp install" &> /dev/null
-    _chroot "echo -e \"${loader}\" > /esp/loader/loader.conf"
-    _chroot "echo -e \"${arch_entrie}\" > /esp/loader/entries/arch.conf"
-    _chroot "echo -e \"${arch_rescue}\" > /esp/loader/entries/arch-rescue.conf"
+    _chroot "bootctl --path=/mnt/esp install"
+    _chroot "echo -e \"${loader}\" > /mnt/esp/loader/loader.conf"
+    _chroot "echo -e \"${arch_entrie}\" > /mnt/esp/loader/entries/arch.conf"
+    _chroot "echo -e \"${arch_rescue}\" > /mnt/esp/loader/entries/arch-rescue.conf"
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
-    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
-    _chroot "mkinitcpio -p linux" &> /dev/null
+    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
+    _chroot "mkinitcpio -p linux" 
 }
 
 iniciar
@@ -94,6 +93,8 @@ formatar_disco
 montar_disco
 instalar_sistema
 instalar_systemd_boot
+_chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
+_chroot "echo root:root | chpasswd"
 echo "Sistema instalado com sucesso!"
 echo
 tree /mnt/mnt

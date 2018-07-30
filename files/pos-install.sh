@@ -8,7 +8,7 @@ MY_USER_NAME="André"
 HOST="arch-dsk"
 readonly PACOTES=(
     "bash-completion" "xdg-user-dirs" "vim" "telegram-desktop" "p7zip" 
-    "zip" "unzip" "unrar" "wget" "numlockx" "polkit" "compton" "pamac-aur" 
+    "zip" "unzip" "unrar" "wget" "numlockx" "polkit" "polkit-gnome" "compton" "pamac-aur" 
     "google-chrome" "alsa-utils" "alsa-oss" "alsa-lib" "pulseaudio" "spotify" 
     "playerctl" "pavucontrol" "xorg-server" "xorg-xinit" "xorg-xprop" "xorg-xbacklight" 
     "xorg-xdpyinfo" "xorg-xrandr" "xf86-video-intel" "vulkan-intel" "networkmanager"
@@ -17,7 +17,7 @@ readonly PACOTES=(
     "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "light-locker" "i3-gaps" 
     "i3lock" "rofi" "mlocate" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
     "ranger" "termite" "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 
-    "ttf-font-awesome" "visual-studio-code-bin")
+    "ttf-font-awesome" "ttf-dejavu ttf-liberation noto-fonts" "maim" "xclip" "visual-studio-code-bin")
     
 function configurar_idioma(){
     echo -e "KEYMAP=br-abnt2\nFONT=\nFONT_MAP=" > /etc/vconsole.conf
@@ -26,6 +26,7 @@ function configurar_idioma(){
     echo LANG=pt_BR.UTF-8 > /etc/locale.conf
     export LANG=pt_BR.UTF-8
     localectl set-x11-keymap br abnt2
+    timedatectl set-timezone America/Sao_Paulo
     timedatectl set-ntp true
 }
 

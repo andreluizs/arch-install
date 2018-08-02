@@ -13,7 +13,7 @@ readonly PACOTES=(
     "playerctl" "pavucontrol" "xorg-server" "xorg-xinit" "xorg-xprop" "xorg-xbacklight" 
     "xorg-xdpyinfo" "xorg-xrandr" "xf86-video-intel" "vulkan-intel" "networkmanager"
     "network-manager-applet" "networkmanager-pptp" "remmina" "rdesktop" 
-    "remmina-plugin-rdesktop" "ufw" "xf86-input-libinput" "tlp" "lightdm" 
+    "remmina-plugin-rdesktop" "ufw" "xf86-input-libinput" "lightdm" 
     "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "light-locker" "i3-gaps" 
     "i3lock" "rofi" "mlocate" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
     "ranger" "termite" "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 

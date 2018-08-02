@@ -47,10 +47,11 @@ function formatar_disco(){
 function montar_disco(){
     echo "+ Montando as partições."
     mount "${SSD}5" /mnt
-    mkdir -p "/mnt/mnt/esp/EFI/arch"
+    mkdir -p /mnt/mnt/esp
     mkdir -p /mnt/boot
-    mount --bind "/mnt/mnt/esp/EFI/arch" /mnt/boot
-    mount "${SSD}1" "/mnt/mnt/esp"
+    mount "${SSD}1" /mnt/mnt/esp
+    mkdir -p /mnt/mnt/esp/EFI/arch
+    mount --bind /mnt/mnt/esp/EFI/arch /mnt/boot
     mkdir -p /mnt/home
     mount "${HD}2" /mnt/home
     swapon "${SSD}4"
@@ -62,13 +63,16 @@ function montar_disco(){
 
 function instalar_sistema(){
    
-    (pacstrap /mnt base base-devel intel-ucode tree networkmanager &> /dev/null) &
+    (pacstrap /mnt base base-devel btrfs-progs snapper intel-ucode tree networkmanager &> /dev/null) &
     _spinner "+ Instalando o sistema:" $! 
     echo -ne "[100%]\\n"
 
     echo "+ Gerando fstab."
-    genfstab -U -p /mnt >> /mnt/etc/fstab 
-    _chroot "pacman-key --init && pacman-key --populate archlinux" &> /dev/null
+    genfstab -t PARTUUID -p /mnt >> /mnt/etc/fstab 
+    
+    _chroot "sed -i 's|/mnt/mnt|/mnt|g' /etc/fstab"
+    _chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
+    _chroot "echo root:root | chpasswd"
 }
 
 function instalar_systemd_boot(){
@@ -76,7 +80,7 @@ function instalar_systemd_boot(){
     local loader="timeout 0\ndefault arch"
     local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw"
     local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw systemd.unit=rescue.target"
-    local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/esp update"
+    local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/mnt/esp update"
     
     _chroot "bootctl --path=/mnt/esp install"
     _chroot "echo -e \"${loader}\" > /mnt/esp/loader/loader.conf"
@@ -84,7 +88,7 @@ function instalar_systemd_boot(){
     _chroot "echo -e \"${arch_rescue}\" > /mnt/esp/loader/entries/arch-rescue.conf"
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
-    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
+    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block btrfs filesystems keyboard\"/' /etc/mkinitcpio.conf"
     _chroot "mkinitcpio -p linux" 
 }
 
@@ -93,12 +97,12 @@ formatar_disco
 montar_disco
 instalar_sistema
 instalar_systemd_boot
-_chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
-_chroot "echo root:root | chpasswd"
 echo "Sistema instalado com sucesso!"
 echo
-tree /mnt/mnt
+tree /mnt/mnt/esp
 echo
 tree /mnt/boot
+echo
+cat /mnt/etc/fstab
 umount -R /mnt &> /dev/null || /bin/true
 swapoff "${SSD}4" &> /dev/null || /bin/true

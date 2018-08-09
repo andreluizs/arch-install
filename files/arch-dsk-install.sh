@@ -125,10 +125,6 @@ function configurar_sistema(){
     _chuser "cd /home/${MY_USER}/tmp/yay && makepkg -si --noconfirm" &> /dev/null
     _chuser "rm -rf /home/${MY_USER}/tmp/yay"
     
-    # echo "+ Criando snapshot"
-    # _chroot "snapper -c root create-config /"
-    # _chroot "snapper -c home create-config /home"
-    # _chroot "sed -i 's/^TIME.*/TIMELINE_CREATE=\"no\"' /etc/snapper/configs/config"
 }
 
 iniciar

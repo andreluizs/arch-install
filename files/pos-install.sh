@@ -17,7 +17,8 @@ readonly PACOTES=(
     "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "light-locker" "i3-gaps" 
     "i3lock" "rofi" "mlocate" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
     "ranger" "termite" "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 
-    "ttf-font-awesome" "ttf-dejavu ttf-liberation noto-fonts" "maim" "xclip" "visual-studio-code-bin")
+    "ttf-font-awesome" "ttf-dejavu ttf-liberation noto-fonts" "maim" "xclip" "visual-studio-code-bin"
+    "snap-pac")
     
 function configurar_idioma(){
     echo -e "KEYMAP=br-abnt2\nFONT=\nFONT_MAP=" > /etc/vconsole.conf
@@ -65,6 +66,14 @@ function configurar_mirror_list(){
     reflector --country Brazil --verbose --latest 10 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
 }
 
+function configurar_snapper(){
+    echo "+ Configurando snnaper"
+    _chroot "snapper -c root create-config /"
+    _chroot "snapper -c home create-config /home"
+    _chroot "sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/root"
+    _chroot "sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/home"
+}
+
 cd /tmp
 configurar_mirror_list
 instalar_aur_helper
@@ -72,3 +81,4 @@ configurar_usuario
 clonar_dotfiles
 configurar_idioma
 instalar_pacote
+configurar_snapper

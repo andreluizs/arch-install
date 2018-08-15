@@ -3,11 +3,11 @@
 set -o errexit
 set -o pipefail
 
-SSD="/dev/sda"
-HD="/dev/sdb"
+SSD="/dev/sdb"
+HD="/dev/sda"
 MY_USER="andre"
 MY_USER_NAME="André"
-HOST="arch-dsk"
+HOST="arch-node"
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"
@@ -38,22 +38,22 @@ function iniciar(){
     timedatectl set-ntp true
     timedatectl set-timezone America/Sao_Paulo
     echo "+ Configurando mirrors."
-    pacman -Sy tree reflector --needed --noconfirm &> /dev/null
-    reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+    #pacman -Sy tree reflector --needed --noconfirm &> /dev/null
+    #reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 function formatar_disco(){
     echo "+ Formatando as partições."
-    wipefs -af "${SSD}5" &> /dev/null
+    wipefs -af "${SSD}4" &> /dev/null
     wipefs -af "${HD}2" &> /dev/null
-    mkfs.btrfs -f -L ROOT "${SSD}5" &> /dev/null
+    mkfs.btrfs -f -L ROOT "${SSD}4" &> /dev/null
     mkfs.btrfs -f -L HOME "${HD}2" &> /dev/null
-    mkswap -L SWAP "${SSD}4" &> /dev/null
+    #mkswap -L SWAP "${SSD}4" &> /dev/null
 }
 
 function montar_disco(){
     echo "+ Montando as partições."
-    mount "${SSD}5" /mnt
+    mount "${SSD}4" /mnt
     mkdir -p /mnt/mnt/esp
     mkdir -p /mnt/boot
     mount "${SSD}1" /mnt/mnt/esp
@@ -61,7 +61,7 @@ function montar_disco(){
     mount --bind /mnt/mnt/esp/EFI/arch /mnt/boot
     mkdir -p /mnt/home
     mount "${HD}2" /mnt/home
-    swapon "${SSD}4"
+    #swapon "${SSD}4"
     echo "+------------------- TABELA --------------------+"
     lsblk ${SSD} -o name,size,mountpoint
     lsblk ${HD} -o name,size,mountpoint --noheadings
@@ -84,8 +84,8 @@ function instalar_sistema(){
 function instalar_systemd_boot(){
     echo "+ Instalando o bootloader."
     local loader="timeout 0\ndefault arch"
-    local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw"
-    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw systemd.unit=rescue.target"
+    local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}4 rw"
+    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}4 rw systemd.unit=rescue.target"
     local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/mnt/esp update"
     
     _chroot "bootctl --path=/mnt/esp install" &> /dev/null
@@ -100,8 +100,8 @@ function instalar_systemd_boot(){
 
 function configurar_sistema(){
     echo "+ Configurando mirrors."
-    _chroot "pacman -Sy reflector --needed --noconfirm" &> /dev/null
-    _chroot "reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist"
+    #_chroot "pacman -Sy reflector --needed --noconfirm" &> /dev/null
+    #_chroot "reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist"
     
     echo "+ Configurando o idioma."
     _chroot "echo -e \"KEYMAP=br-abnt2\\nFONT=\\nFONT_MAP=\" > /etc/vconsole.conf"
@@ -109,7 +109,7 @@ function configurar_sistema(){
     _chroot "locale-gen" 1> /dev/null
     _chroot "echo LANG=pt_BR.UTF-8 > /etc/locale.conf"
     _chroot "export LANG=pt_BR.UTF-8"
-    _chroot "ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime"
+    #_chroot "ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime"
 
     echo "+ Criando o usuário."
     _chroot "useradd -m -g users -G wheel -c \"${MY_USER_NAME}\" -s /bin/bash $MY_USER"

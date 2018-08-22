@@ -8,16 +8,16 @@ MY_USER_NAME="André"
 HOST="arch-dsk"
 readonly PACOTES=(
     "bash-completion" "xdg-user-dirs" "vim" "telegram-desktop" "p7zip" 
-    "zip" "unzip" "unrar" "wget" "numlockx" "polkit" "polkit-gnome" "compton" "pamac-aur" 
-    "google-chrome" "alsa-utils" "alsa-oss" "alsa-lib" "pulseaudio" "spotify" 
+    "zip" "unzip" "unrar" "wget" "numlockx" "polkit-gnome" "compton" "pamac-aur" 
+    "google-chrome" "alsa-utils" "alsa-oss" "alsa-lib" "pulseaudio"
     "playerctl" "pavucontrol" "xorg-server" "xorg-xinit" "xorg-xprop" "xorg-xbacklight" 
     "xorg-xdpyinfo" "xorg-xrandr" "xf86-video-intel" "vulkan-intel" "networkmanager"
     "network-manager-applet" "networkmanager-pptp" "remmina" "rdesktop" 
-    "remmina-plugin-rdesktop" "ufw" "xf86-input-libinput" "lightdm" 
-    "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "light-locker" "i3-gaps" 
-    "i3lock" "rofi" "mlocate" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
+    "remmina-plugin-rdesktop" "ufw" "lightdm" 
+    "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "bspwm" "sxhkd"
+    "rofi" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
     "ranger" "termite" "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 
-    "ttf-font-awesome" "ttf-dejavu ttf-liberation noto-fonts" "maim" "xclip" "visual-studio-code-bin"
+    "ttf-font-awesome" "ttf-liberation" "scrot" "xclip" "visual-studio-code-bin"
     "snap-pac")
     
 function configurar_idioma(){
@@ -40,9 +40,9 @@ function configurar_usuario(){
 
 function instalar_aur_helper(){
     pacman -S git --needed --noconfirm
-    su -c ${MY_USER} "git clone https://aur.archlinux.org/yay.git"
-    cd yay
-    su -c ${MY_USER} "makepkg -si"
+    su ${MY_USER} -c "git clone https://aur.archlinux.org/yay.git /home/${MY_USER}/yay"
+    cd "/home/${MY_USER}/yay"
+    su ${MY_USER} -c "makepkg -si --noconfirm"
     rm -rf yay
 }
 
@@ -53,9 +53,9 @@ function instalar_pacote(){
 }
 
 function clonar_dotfiles(){
-    su -c ${MY_USER} "cd /home/${MY_USER} && rm -rf .[^.] .??*" &> /dev/null
-    su -c ${MY_USER} "cd /home/${MY_USER} && git clone --bare https://github.com/andreluizs/dotfiles.git /home/${MY_USER}/.dotfiles" 
-    su -c ${MY_USER} "cd /home/${MY_USER} && /usr/bin/git --git-dir=/home/${MY_USER}/.dotfiles/ --work-tree=/home/${MY_USER} checkout"
+    su ${MY_USER} -c "cd /home/${MY_USER} && rm -rf .[^.] .??*" &> /dev/null
+    su ${MY_USER} -c "cd /home/${MY_USER} && git clone --bare https://github.com/andreluizs/dotfiles.git /home/${MY_USER}/.dotfiles" 
+    su ${MY_USER} -c "cd /home/${MY_USER} && /usr/bin/git --git-dir=/home/${MY_USER}/.dotfiles/ --work-tree=/home/${MY_USER} checkout"
 }
 
 function configurar_mirror_list(){
@@ -68,17 +68,17 @@ function configurar_mirror_list(){
 
 function configurar_snapper(){
     echo "+ Configurando snnaper"
-    _chroot "snapper -c root create-config /"
-    _chroot "snapper -c home create-config /home"
-    _chroot "sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/root"
-    _chroot "sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/home"
+    snapper -c root create-config /
+    snapper -c home create-config /home
+    sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/root
+    sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/home
 }
 
 cd /tmp
-configurar_mirror_list
-instalar_aur_helper
-configurar_usuario
-clonar_dotfiles
-configurar_idioma
-instalar_pacote
+#configurar_mirror_list
+#instalar_aur_helper
+#configurar_usuario
+#clonar_dotfiles
+#configurar_idioma
+#instalar_pacote
 configurar_snapper

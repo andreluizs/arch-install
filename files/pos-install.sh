@@ -3,46 +3,34 @@
 set -o errexit
 set -o pipefail
 
-MY_USER="andre"
-MY_USER_NAME="André"
-HOST="arch-dsk"
+MY_USER=andre
+
 readonly PACOTES=(
-    "bash-completion" "xdg-user-dirs" "vim" "telegram-desktop" "p7zip" 
+    "xdg-user-dirs" "vim" "telegram-desktop" "p7zip" 
     "zip" "unzip" "unrar" "wget" "numlockx" "polkit-gnome" "compton" "pamac-aur" 
     "google-chrome" "alsa-utils" "alsa-oss" "alsa-lib" "pulseaudio"
     "playerctl" "pavucontrol" "xorg-server" "xorg-xinit" "xorg-xprop" "xorg-xbacklight" 
-    "xorg-xdpyinfo" "xorg-xrandr" "xf86-video-intel" "vulkan-intel" "networkmanager"
-    "network-manager-applet" "networkmanager-pptp" "remmina" "rdesktop" 
-    "remmina-plugin-rdesktop" "ufw" "lightdm" 
-    "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings" "bspwm" "sxhkd"
-    "rofi" "dunst" "polybar" "nitrogen" "tty-clock" "lxappearance"
-    "ranger" "termite" "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 
-    "ttf-font-awesome" "ttf-liberation" "scrot" "xclip" "visual-studio-code-bin"
-    "snap-pac")
+    "xorg-xdpyinfo" "xorg-xrandr" "xf86-video-intel" "vulkan-intel" "network-manager-applet" 
+    "networkmanager-pptp" "remmina" "rdesktop" "remmina-plugin-rdesktop" "ufw" "lightdm" 
+    "lightdm-gtk-greeter" "lightdm-gtk-greeter-settings"
+    "rofi" "dunst" "tty-clock"
+    "gtk-engine-murrine" "lib32-gtk-engine-murrine" "hardcode-tray-git" 
+    "ttf-liberation" "ttf-iosevka-ss07" "ttf-iosevka-term-ss09" "xclip" "visual-studio-code-bin"
+    "xfce4" "xfce4-goodies" papirus-icon-theme-git papirus-folders-git gtk-theme-arc-grey-git)
     
-function configurar_idioma(){
-    echo -e "KEYMAP=br-abnt2\nFONT=\nFONT_MAP=" > /etc/vconsole.conf
-    sed -i '/pt_BR/,+1 s/^#//' /etc/locale.gen
-    locale-gen
-    echo LANG=pt_BR.UTF-8 > /etc/locale.conf
-    export LANG=pt_BR.UTF-8
+function configurar_teclado(){
     localectl set-x11-keymap br abnt2
-    timedatectl set-timezone America/Sao_Paulo
-    timedatectl set-ntp true
+    localectl set-keymap br abnt2
+    timedatectl set-local-rtc 1 --adjust-system-clock
 }
 
-function configurar_usuario(){
-    useradd -m -g users -G wheel -c "${MY_USER_NAME}" -s /bin/bash $MY_USER
-    echo ${MY_USER}:${MY_USER} | chpasswd
-    sed -i '/%wheel ALL=(ALL) NOPASSWD: ALL/s/^#//' /etc/sudoers
-    hostnamectl set-hostname ${HOST}
-}
 
 function instalar_aur_helper(){
     pacman -S git --needed --noconfirm
     su ${MY_USER} -c "git clone https://aur.archlinux.org/yay.git /home/${MY_USER}/yay"
     cd "/home/${MY_USER}/yay"
     su ${MY_USER} -c "makepkg -si --noconfirm"
+    cd ..
     rm -rf yay
 }
 
@@ -58,27 +46,7 @@ function clonar_dotfiles(){
     su ${MY_USER} -c "cd /home/${MY_USER} && /usr/bin/git --git-dir=/home/${MY_USER}/.dotfiles/ --work-tree=/home/${MY_USER} checkout"
 }
 
-function configurar_mirror_list(){
-    clear
-    echo "+------------------ ARCH - POS -----------------+"
-    echo "+ Configurando mirrors."
-    pacman -Sy reflector --needed --noconfirm &> /dev/null
-    reflector --country Brazil --verbose --latest 10 --sort rate --save /etc/pacman.d/mirrorlist &> /dev/null
-}
-
-function configurar_snapper(){
-    echo "+ Configurando snnaper"
-    snapper -c root create-config /
-    snapper -c home create-config /home
-    sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/root
-    sed -i 's/TIMELINE_CREATE=\"yes\"/TIMELINE_CREATE=\"no\"/' /etc/snapper/configs/home
-}
-
-cd /tmp
-#configurar_mirror_list
 #instalar_aur_helper
-#configurar_usuario
 #clonar_dotfiles
-#configurar_idioma
-#instalar_pacote
-configurar_snapper
+#configurar_teclado
+instalar_pacote

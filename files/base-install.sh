@@ -5,16 +5,9 @@ set -o pipefail
 
 MY_USER="andre"
 MY_USER_NAME="André Luiz dos Santos"
-if [ $1 eq 0 ]; then
-    SSD="/dev/sda"
-    HD="/dev/sdb"
-    HOST="arch-dsk"
-else
-    # SSD="/dev/sdb"
-    # HD="/dev/sda"
-    # HOST="arch-node"
-    echo "Notebook"
-fi
+SSD="/dev/sda"
+HD="/dev/sdb"
+HOST="arch-dsk"
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"
@@ -42,9 +35,6 @@ function iniciar(){
     echo "+------------------ ARCH - DSK -----------------+"
     umount -R /mnt &> /dev/null || /bin/true
     timedatectl set-ntp true
-    echo "+ Configurando mirrors."
-    #pacman -Sy tree reflector --needed --noconfirm &> /dev/null
-    #reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 function formatar_disco(){
@@ -102,9 +92,6 @@ function instalar_systemd_boot(){
 }
 
 function configurar_sistema(){
-    echo "+ Configurando mirrors."
-    #_chroot "pacman -Sy reflector --needed --noconfirm" &> /dev/null
-    #_chroot "reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist"
     
     echo "+ Configurando o idioma."
     _chroot "echo -e \"KEYMAP=br-abnt2\\nFONT=\\nFONT_MAP=\" > /etc/vconsole.conf"

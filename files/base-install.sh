@@ -34,7 +34,6 @@ function iniciar(){
     clear
     echo "+------------------ ARCH - DSK -----------------+"
     umount -R /mnt &> /dev/null || /bin/true
-    timedatectl set-ntp true
 }
 
 function formatar_disco(){
@@ -53,6 +52,7 @@ function montar_disco(){
     mount "${SSD}1" /mnt/mnt/esp
     mkdir -p /mnt/mnt/esp/EFI/arch
     mount --bind /mnt/mnt/esp/EFI/arch /mnt/boot
+    rm -rf /mnt/boot/*
     mkdir -p /mnt/home
     mount "${HD}2" /mnt/home
     echo "+------------------- TABELA --------------------+"
@@ -80,14 +80,14 @@ function instalar_systemd_boot(){
     local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}4 rw"
     local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}4 rw systemd.unit=rescue.target"
     local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/mnt/esp update"
-    
+
     _chroot "bootctl --path=/mnt/esp install" &> /dev/null
     _chroot "echo -e \"${loader}\" > /mnt/esp/loader/loader.conf"
     _chroot "echo -e \"${arch_entrie}\" > /mnt/esp/loader/entries/arch.conf"
     _chroot "echo -e \"${arch_rescue}\" > /mnt/esp/loader/entries/arch-rescue.conf"
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
-    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block btrfs filesystems keyboard\"/' /etc/mkinitcpio.conf"
+    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard fsck\"/' /etc/mkinitcpio.conf"
     _chroot "mkinitcpio -p linux"  &> /dev/null
 }
 

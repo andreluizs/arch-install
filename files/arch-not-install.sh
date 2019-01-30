@@ -5,8 +5,9 @@ set -o pipefail
 
 MY_USER="andre"
 MY_USER_NAME="André Luiz dos Santos"
-SSD="/dev/sda"
-HOST="aranot072"
+SSD="/dev/sdb"
+HD="/dev/sda"
+HOST="arch-not"
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"
@@ -34,7 +35,9 @@ function iniciar(){
     echo "+------------------ ARCH - CAST ----------------+"
     umount -R /mnt &> /dev/null || /bin/true
     wipefs -af "${SSD}4" &> /dev/null
+    wipefs -af "${HD}2" &> /dev/null
     mkfs.ext4 -F -L ROOT "${SSD}4" &> /dev/null
+    mkfs.ext4 -F -L HOME "${HD}2" &> /dev/null
 }
 
 function montar_disco(){
@@ -42,11 +45,14 @@ function montar_disco(){
     mount "${SSD}4" /mnt
     mkdir -p /mnt/boot
     mkdir -p /mnt/esp
+    mkdir -p /mnt/home
     mount "${SSD}1" /mnt/esp
     mkdir -p /mnt/esp/EFI/arch
     mount --bind /mnt/esp/EFI/arch /mnt/boot
+    mount "${HD}2" /mnt/home
     echo "+------------------- TABELA --------------------+"
     lsblk ${SSD} -o name,size,mountpoint
+    lsblk ${HD} -o name,size,mountpoint --noheadings
     echo "+-----------------------------------------------+"
 }
 

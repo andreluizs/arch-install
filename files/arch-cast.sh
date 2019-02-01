@@ -7,6 +7,9 @@ MY_USER="andre"
 MY_USER_NAME="André Luiz dos Santos"
 SSD="/dev/sda"
 HOST="aranot072"
+BASE_PKG="intel-ucode networkmanager bash-completion xorg xorg-xinit xf86-video-intel xf86-input-libinput plasma-desktop "
+BASE_PKG+="sddm sddm-kcm konsole dolphin kate breeze-gtk kde-gtk-config kdeplasma-addons plasma-nm plasma-pa "
+BASE_PKG+="ark kinfocenter gwenview kipi-plugins digikam spectacle okular xdg-user-dirs git"
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"
@@ -51,7 +54,7 @@ function montar_disco(){
 }
 
 function instalar_sistema(){
-    (pacstrap /mnt base base-devel intel-ucode networkmanager bash-completion &> /dev/null) &
+    (pacstrap /mnt base base-devel ${BASE_PKG} &> /dev/null) &
     _spinner "+ Instalando o sistema:" $! 
     echo -ne "[100%]\\n"
 
@@ -94,6 +97,12 @@ function configurar_sistema(){
     _chroot "echo root:${MY_USER} | chpasswd"
     _chroot "sed -i '/%wheel ALL=(ALL) NOPASSWD: ALL/s/^#//' /etc/sudoers"
     _chroot "echo \"$HOST\" > /etc/hostname"
+
+    echo "+ Instalando o AUR Helper (yay)."
+    _chroot "pacman -Sy --noconfirm" &> /dev/null
+    _chuser "git clone https://aur.archlinux.org/yay.git /home/${MY_USER}/yay" &> /dev/null
+    _chuser "cd /home/${MY_USER}/yay && makepkg -si --noconfirm" &> /dev/null
+    _chroot "rm -rf /home/${MY_USER}/yay"
 }
 
 iniciar
@@ -103,3 +112,4 @@ instalar_systemd_boot
 configurar_sistema
 echo "+-------- SISTEMA INSTALADO COM SUCESSO --------+"
 umount -R /mnt &> /dev/null || /bin/true
+echo

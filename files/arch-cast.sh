@@ -9,7 +9,9 @@ SSD="/dev/sda"
 HOST="aranot072"
 BASE_PKG="intel-ucode networkmanager bash-completion xorg xorg-xinit xf86-video-intel xf86-input-libinput plasma-desktop "
 BASE_PKG+="sddm sddm-kcm konsole dolphin kate breeze-gtk kde-gtk-config kdeplasma-addons plasma-nm plasma-pa "
-BASE_PKG+="ark kinfocenter gwenview kipi-plugins digikam spectacle okular xdg-user-dirs git"
+BASE_PKG+="ark kinfocenter gwenview kipi-plugins digikam spectacle okular kscreen user-manager ntfs-3g gvfs xdg-user-dirs git "
+BASE_PKG+="gnome-themes-standard gtk-engine-murrine kamoso powerdevil bluedevil bluez bluez-utils pulseaudio-bluetooth "
+BASE_PKG+="noto-fonts-emoji ttf-dejavu ttf-liberation noto-fonts "
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"

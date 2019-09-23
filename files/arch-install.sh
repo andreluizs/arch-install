@@ -13,8 +13,6 @@ BASE_PKG="intel-ucode networkmanager bash-completion xorg xorg-xinit xf86-video-
 BASE_PKG+="gnome-themes-standard gtk-engine-murrine gvfs xdg-user-dirs git "
 BASE_PKG+="noto-fonts-emoji ttf-dejavu ttf-liberation noto-fonts "
 BASE_PKG+="pulseaudio pulseaudio-alsa p7zip zip unzip unrar wget telegram-desktop "
-BASE_PKG+="gnome "
-
 
 function _chroot() {
     arch-chroot /mnt /bin/bash -c "$1"
@@ -84,8 +82,10 @@ function instalar_sistema(){
 function instalar_grub(){
     echo "+ Instalando o bootloader."
     _chroot "pacman -S grub efibootmgr os-prober --noconfirm" &> /dev/null
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --removable --recheck"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --recheck"
+    _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/GRUB/bootx64.efi"
     _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
+    _chroot "mkinitcpio -p linux"
 }
 
 function configurar_sistema(){

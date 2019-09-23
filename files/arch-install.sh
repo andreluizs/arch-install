@@ -83,8 +83,8 @@ function instalar_sistema(){
 
 function instalar_grub(){
     echo "+ Instalando o bootloader."
-    _chroot "pacman -S grub efibootmgr os-prober --noconfirm"
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --recheck"
+    _chroot "pacman -S grub efibootmgr os-prober --noconfirm" &> /dev/null
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --removable --recheck"
     _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
 }
 

@@ -39,9 +39,7 @@ function iniciar(){
     clear
     echo "+---------------- ARCH - INSTALL ---------------+"
     umount -R /mnt &> /dev/null || /bin/true
-    # timedatectl set-ntp true
-    # timedatectl set-timezone America/Sao_Paulo
-    echo "+ Configurando mirrors."
+    # echo "+ Configurando mirrors."
 }
 
 function formatar_disco(){
@@ -79,11 +77,19 @@ function instalar_sistema(){
     _chroot "pacman -Sy" &> /dev/null
 }
 
+function criar_swapfile(){
+    echo "Criando o swapfile com 4GB."
+    _chroot "fallocate -l \"4096M\" /swapfile" 1> /dev/null
+    _chroot "chmod 600 /swapfile" 1> /dev/null
+    _chroot "mkswap /swapfile" 1> /dev/null
+    _chroot "swapon /swapfile" 1> /dev/null
+    _chroot "echo -e /swapfile none swap defaults 0 0 >> /etc/fstab"
+}
+
 function instalar_grub(){
     echo "+ Instalando o bootloader."
     _chroot "pacman -S grub efibootmgr os-prober --noconfirm" &> /dev/null
-    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --recheck"
-    _chroot "mv /boot/EFI/GRUB/grubx64.efi /boot/EFI/GRUB/bootx64.efi"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --removable --recheck"
     _chroot "grub-mkconfig -o /boot/grub/grub.cfg"
     _chroot "mkinitcpio -p linux"
 }
@@ -115,6 +121,7 @@ iniciar
 formatar_disco
 montar_disco
 instalar_sistema
+criar_swapfile
 instalar_grub
 configurar_sistema
 echo "+-------- SISTEMA INSTALADO COM SUCESSO --------+"

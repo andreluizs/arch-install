@@ -7,13 +7,13 @@ SSD="/dev/sdb"
 HD="/dev/sda"
 MY_USER="andre"
 MY_USER_NAME="André"
-HOST="ajnot01"
+HOST="arch"
 
 BASE_PKG="intel-ucode networkmanager bash-completion xorg xorg-xinit xf86-video-intel ntfs-3g "
 BASE_PKG+="gnome-themes-standard gtk-engine-murrine gvfs xdg-user-dirs git "
 BASE_PKG+="noto-fonts-emoji ttf-dejavu ttf-liberation noto-fonts "
-BASE_PKG+="pulseaudio pulseaudio-alsa p7zip zip unzip unrar wget "
-BASE_PKG+="gnome gnome-extra telegram-desktop"
+BASE_PKG+="pulseaudio pulseaudio-alsa p7zip zip unzip unrar wget telegram-desktop "
+BASE_PKG+="gnome "
 
 
 function _chroot() {
@@ -39,10 +39,10 @@ function _spinner(){
 
 function iniciar(){
     clear
-    echo "+----------------- ARCH - AJDSK ----------------+"
+    echo "+---------------- ARCH - INSTALL ---------------+"
     umount -R /mnt &> /dev/null || /bin/true
-    timedatectl set-ntp true
-    timedatectl set-timezone America/Sao_Paulo
+    # timedatectl set-ntp true
+    # timedatectl set-timezone America/Sao_Paulo
     echo "+ Configurando mirrors."
 }
 
@@ -58,11 +58,8 @@ function montar_disco(){
     echo "+ Montando as partições."
     mount "${SSD}5" /mnt
     mkdir -p /mnt/boot
-    mkdir -p /mnt/esp
     mkdir -p /mnt/home
-    mount "${SSD}1" /mnt/esp
-    mkdir -p /mnt/esp/EFI/arch
-    mount --bind /mnt/esp/EFI/arch /mnt/boot
+    mount "${SSD}1" /mnt/boot
     mount "${HD}2" /mnt/home
     echo "+------------------- TABELA --------------------+"
     lsblk ${SSD} -o name,size,mountpoint
@@ -81,23 +78,13 @@ function instalar_sistema(){
     
     _chroot "sed -i 's|/mnt/mnt|/mnt|g' /etc/fstab"
     _chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
+    _chroot "pacman -Sy" &> /dev/null
 }
 
-function instalar_systemd_boot(){
+function instalar_grub(){
     echo "+ Instalando o bootloader."
-    local loader="timeout 3\ndefault arch"
-    local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw"
-    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw systemd.unit=rescue.target"
-    local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/esp update"
-
-    _chroot "bootctl --path=/esp install" &> /dev/null
-    _chroot "echo -e \"${loader}\" > /esp/loader/loader.conf"
-    _chroot "echo -e \"${arch_entrie}\" > /esp/loader/entries/arch.conf"
-    _chroot "echo -e \"${arch_rescue}\" > /esp/loader/entries/arch-rescue.conf"
-    _chroot "mkdir -p /etc/pacman.d/hooks"
-    _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
-    _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
-    _chroot "mkinitcpio -p linux" &> /dev/null
+    _chroot "pacman -S grub efibootmgr os-prober --noconfirm"
+    _chroot "grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --recheck"
 }
 
 function configurar_sistema(){
@@ -119,7 +106,7 @@ function configurar_sistema(){
     _chuser "mkdir -p /home/${MY_USER}/tmp"
     _chuser "cd /home/${MY_USER}/tmp && git clone https://aur.archlinux.org/yay.git" &> /dev/null
     _chuser "cd /home/${MY_USER}/tmp/yay && makepkg -si --noconfirm" &> /dev/null
-    _chuser "rm -rf /home/${MY_USER}/tmp/yay"
+    _chuser "rm -rf /home/${MY_USER}/tmp"
     
 }
 
@@ -127,7 +114,7 @@ iniciar
 formatar_disco
 montar_disco
 instalar_sistema
-instalar_systemd_boot
+instalar_grub
 configurar_sistema
 echo "+-------- SISTEMA INSTALADO COM SUCESSO --------+"
 umount -R /mnt &> /dev/null || /bin/true

@@ -65,7 +65,7 @@ function montar_disco(){
 
 function instalar_sistema(){
    
-    (pacstrap /mnt base base-devel ${BASE_PKG} &> /dev/null) &
+    (pacstrap /mnt base base-devel linux linux-firmware ${BASE_PKG} &> /dev/null) &
     _spinner "+ Instalando o sistema:" $! 
     echo -ne "[100%]\\n"
 

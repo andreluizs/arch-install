@@ -94,6 +94,13 @@ function instalar_grub(){
     _chroot "mkinitcpio -p linux"
 }
 
+function instalar_refind(){
+    local arch_entrie="\\\"Arch Linux\\\" \\\"rw root=${SSD}5 quiet splash\\\""
+    _chroot "pacman -S refind-efi --needed --noconfirm"
+    _chroot "refind-install --usedefault \"${SSD}1\""
+    _chroot "echo ${arch_entrie} > /boot/refind_linux.conf"
+}
+
 function configurar_sistema(){
     echo "+ Configurando o idioma."
     _chroot "echo -e \"KEYMAP=br-abnt2\\nFONT=\\nFONT_MAP=\" > /etc/vconsole.conf"
@@ -122,7 +129,7 @@ formatar_disco
 montar_disco
 instalar_sistema
 criar_swapfile
-instalar_grub
+instalar_refind
 configurar_sistema
 echo "+-------- SISTEMA INSTALADO COM SUCESSO --------+"
 umount -R /mnt &> /dev/null || /bin/true

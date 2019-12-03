@@ -101,6 +101,23 @@ function instalar_refind(){
     _chroot "echo ${arch_entrie} > /boot/refind_linux.conf"
 }
 
+function instalar_systemd_boot(){
+    echo "+ Instalando o bootloader."
+    local loader="timeout 3\ndefault arch"
+    local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw"
+    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}5 rw systemd.unit=rescue.target"
+    local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/boot update"
+
+    _chroot "bootctl --path=/boot install" &> /dev/null
+    _chroot "echo -e \"${loader}\" > /boot/loader/loader.conf"
+    _chroot "echo -e \"${arch_entrie}\" > /boot/loader/entries/arch.conf"
+    _chroot "echo -e \"${arch_rescue}\" > /boot/loader/entries/arch-rescue.conf"
+    _chroot "mkdir -p /etc/pacman.d/hooks"
+    _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
+    # _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
+    _chroot "mkinitcpio -p linux" &> /dev/null
+}
+
 function configurar_sistema(){
     echo "+ Configurando o idioma."
     _chroot "echo -e \"KEYMAP=br-abnt2\\nFONT=\\nFONT_MAP=\" > /etc/vconsole.conf"
@@ -129,7 +146,7 @@ formatar_disco
 montar_disco
 instalar_sistema
 criar_swapfile
-instalar_refind
+instalar_systemd_boot
 configurar_sistema
 echo "+-------- SISTEMA INSTALADO COM SUCESSO --------+"
 umount -R /mnt &> /dev/null || /bin/true

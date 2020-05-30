@@ -102,14 +102,14 @@ function instalar_systemd_boot(){
     local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}2 rw systemd.unit=rescue.target"
     local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/boot update"
 
-    _chroot "bootctl --path=/boot install" &> /dev/null
+    _chroot "bootctl --path=/boot install"
     _chroot "echo -e \"${loader}\" > /boot/loader/loader.conf"
     _chroot "echo -e \"${arch_entrie}\" > /boot/loader/entries/arch.conf"
     _chroot "echo -e \"${arch_rescue}\" > /boot/loader/entries/arch-rescue.conf"
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
     # _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
-    _chroot "mkinitcpio -p linux" &> /dev/null
+    _chroot "mkinitcpio -p linux-lts"
 }
 
 function configurar_sistema(){

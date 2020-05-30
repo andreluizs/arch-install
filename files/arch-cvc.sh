@@ -9,7 +9,7 @@ MY_USER_NAME="André Santos"
 HOST="arch"
 
 BASE_PKG="intel-ucode networkmanager bash-completion xorg xorg-xinit xf86-video-intel ntfs-3g "
-BASE_PKG+="gnome-themes-standard gtk-engine-murrine gvfs xdg-user-dirs git "
+BASE_PKG+="gnome-themes-standard gtk-engine-murrine gvfs xdg-user-dirs git nano "
 BASE_PKG+="noto-fonts-emoji ttf-dejavu ttf-liberation noto-fonts "
 BASE_PKG+="pulseaudio pulseaudio-alsa p7zip zip unzip unrar wget telegram-desktop "
 
@@ -98,8 +98,8 @@ function instalar_refind(){
 function instalar_systemd_boot(){
     echo "+ Instalando o bootloader."
     local loader="timeout 3\ndefault arch"
-    local arch_entrie="title Arch Linux\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}2 rw"
-    local arch_rescue="title Arch Linux (Rescue)\\nlinux /EFI/arch/vmlinuz-linux\\n\\ninitrd  /EFI/arch/intel-ucode.img\\ninitrd /EFI/arch/initramfs-linux.img\\noptions root=${SSD}2 rw systemd.unit=rescue.target"
+    local arch_entrie="title Arch Linux\\nlinux /vmlinuz-linux\\n\\ninitrd  intel-ucode.img\\ninitrd initramfs-linux.img\\noptions root=${SSD}2 rw"
+    local arch_rescue="title Arch Linux (Rescue)\\nlinux vmlinuz-linux\\n\\ninitrd  intel-ucode.img\\ninitrd initramfs-linux.img\\noptions root=${SSD}2 rw systemd.unit=rescue.target"
     local boot_hook="[Trigger]\\nType = Package\\nOperation = Upgrade\\nTarget = systemd\\n\\n[Action]\\nDescription = Updating systemd-boot\\nWhen = PostTransaction\\nExec = /usr/bin/bootctl --path=/boot update"
 
     _chroot "bootctl --path=/boot install"
@@ -108,7 +108,6 @@ function instalar_systemd_boot(){
     _chroot "echo -e \"${arch_rescue}\" > /boot/loader/entries/arch-rescue.conf"
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
-    # _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
     _chroot "mkinitcpio -p linux"
 }
 

@@ -60,7 +60,7 @@ function montar_disco(){
 
 function instalar_sistema(){
    
-    (pacstrap /mnt base base-devel linux-lts linux-firmware ${BASE_PKG} &> /dev/null) &
+    (pacstrap /mnt base base-devel linux linux-firmware ${BASE_PKG} &> /dev/null) &
     _spinner "+ Instalando o sistema:" $! 
     echo -ne "[100%]\\n"
 
@@ -109,7 +109,7 @@ function instalar_systemd_boot(){
     _chroot "mkdir -p /etc/pacman.d/hooks"
     _chroot "echo -e \"${boot_hook}\" > /etc/pacman.d/hooks/systemd-boot.hook"
     # _chroot "sed -i 's/^HOOKS.*/HOOKS=\"base udev autodetect modconf block filesystems keyboard\"/' /etc/mkinitcpio.conf"
-    _chroot "mkinitcpio -p linux-lts"
+    _chroot "mkinitcpio -p linux"
 }
 
 function configurar_sistema(){

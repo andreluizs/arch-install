@@ -65,7 +65,7 @@ function instalar_sistema(){
     echo -ne "[100%]\\n"
 
     echo "+ Gerando fstab."
-    genfstab -p -U /mnt >> /mnt/etc/fstab 
+    genfstab -U /mnt >> /mnt/etc/fstab 
     
     _chroot "sed -i '/multilib]/,+1  s/^#//' /etc/pacman.conf"
     _chroot "pacman -Sy" &> /dev/null
